@@ -8,22 +8,25 @@ import starlightLinksValidator from 'starlight-links-validator';
 /**
  * Chapters, easy to complex. This array IS the reading order.
  *
- * Directory names carry no numeric prefixes, so a chapter can be inserted,
- * renamed, or reordered here without changing a single published URL.
+ * Directory names carry the reading-order number, so it appears in the URL
+ * (/chapters/02-multi-armed-bandits/). Sidebar labels stay unnumbered.
+ *
+ * The numbers are load-bearing: renumbering a chapter changes its published
+ * URL and breaks any existing link to it. Prefer appending over inserting.
  */
 const chapters = [
-  ['Foundations', 'foundations'],
-  ['Multi-armed bandits', 'multi-armed-bandits'],
-  ['Markov decision processes', 'markov-decision-processes'],
-  ['Dynamic programming', 'dynamic-programming'],
-  ['Monte Carlo methods', 'monte-carlo-methods'],
-  ['Temporal-difference learning', 'temporal-difference-learning'],
-  ['n-step and eligibility traces', 'n-step-and-eligibility-traces'],
-  ['Planning and learning', 'planning-and-learning'],
-  ['Function approximation', 'function-approximation'],
-  ['Deep Q-networks', 'deep-q-networks'],
-  ['Policy gradient methods', 'policy-gradient-methods'],
-  ['Advanced policy optimization', 'advanced-policy-optimization'],
+  ['Foundations', '01-foundations'],
+  ['Multi-armed bandits', '02-multi-armed-bandits'],
+  ['Markov decision processes', '03-markov-decision-processes'],
+  ['Dynamic programming', '04-dynamic-programming'],
+  ['Monte Carlo methods', '05-monte-carlo-methods'],
+  ['Temporal-difference learning', '06-temporal-difference-learning'],
+  ['n-step and eligibility traces', '07-n-step-and-eligibility-traces'],
+  ['Planning and learning', '08-planning-and-learning'],
+  ['Function approximation', '09-function-approximation'],
+  ['Deep Q-networks', '10-deep-q-networks'],
+  ['Policy gradient methods', '11-policy-gradient-methods'],
+  ['Advanced policy optimization', '12-advanced-policy-optimization'],
 ];
 
 export default defineConfig({

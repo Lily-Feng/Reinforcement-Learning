@@ -105,7 +105,7 @@ weaker than the first.
 
 The next chapter strips the problem down as far as it goes: one state, several
 actions, immediate reward.
-[Multi-armed bandits](/Reinforcement-Learning/chapters/multi-armed-bandits/) is
+[Multi-armed bandits](/Reinforcement-Learning/chapters/02-multi-armed-bandits/) is
 where exploration can be studied on its own, with nothing else in the way.
 
 ## References

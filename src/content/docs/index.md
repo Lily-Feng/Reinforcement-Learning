@@ -27,4 +27,4 @@ assumes a lookup table.
 
 Start with [Getting started](/Reinforcement-Learning/getting-started/), or jump
 straight to
-[Multi-armed bandits](/Reinforcement-Learning/chapters/multi-armed-bandits/).
+[Multi-armed bandits](/Reinforcement-Learning/chapters/02-multi-armed-bandits/).

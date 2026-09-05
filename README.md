@@ -13,10 +13,16 @@ https://lily-feng.github.io/Reinforcement-Learning/
 
 ## Reading order
 
-Chapters run from easy to complex. Directory names carry no numeric prefixes,
-so a chapter can be renamed, split, or reordered without breaking published
-URLs. Ordering lives in exactly one place: the `sidebar` array in
-`astro.config.mjs`. The array order *is* the curriculum order.
+Chapters run from easy to complex, and the directory name carries the
+reading-order number: `02-multi-armed-bandits`. The number is zero-padded so
+alphabetical order matches numeric order, and hyphenated because Starlight's
+slugifier strips a dot (`2.multi-armed-bandits` would publish as
+`/chapters/2multi-armed-bandits/`).
+
+The number reaches the URL, so **it is permanent**. Renumbering a chapter
+changes its published address and breaks every existing link to it — prefer
+appending a chapter to inserting one. Sidebar labels stay unnumbered; the
+`sidebar` array in `astro.config.mjs` still defines the order.
 
 | # | Chapter | Why it sits here |
 | - | ------- | ---------------- |
@@ -33,8 +39,12 @@ URLs. Ordering lives in exactly one place: the `sidebar` array in
 | 11 | `policy-gradient-methods` | Optimizes the policy directly. REINFORCE, baselines, actor-critic. |
 | 12 | `advanced-policy-optimization` | A2C, trust regions, PPO. |
 
-Each numbered row is a directory; the number is descriptive only and appears
-nowhere in a path or URL.
+Each row is a directory, prefixed with its number: `01-foundations`,
+`02-multi-armed-bandits`, and so on.
+
+Demo routes are deliberately **not** numbered. Demos live in `src/pages/`, not
+in the chapter collection, and leaving them unprefixed means a demo URL
+survives any chapter renumbering.
 
 ## Repository structure
 
@@ -52,13 +62,13 @@ Reinforcement-Learning/
 │   │   ├── index.md
 │   │   ├── getting-started.md
 │   │   └── chapters/
-│   │       ├── foundations/
+│   │       ├── 01-foundations/
 │   │       │   └── index.md
-│   │       ├── multi-armed-bandits/
+│   │       ├── 02-multi-armed-bandits/
 │   │       │   ├── index.md
 │   │       │   ├── action-value-methods.md
 │   │       │   └── epsilon-greedy.mdx
-│   │       ├── markov-decision-processes/
+│   │       ├── 03-markov-decision-processes/
 │   │       │   └── index.md
 │   │       └── ...
 │   ├── demos/
@@ -90,7 +100,7 @@ Each subject has two layers:
 For epsilon-greedy:
 
 ```text
-https://lily-feng.github.io/Reinforcement-Learning/chapters/multi-armed-bandits/epsilon-greedy/
+https://lily-feng.github.io/Reinforcement-Learning/chapters/02-multi-armed-bandits/epsilon-greedy/
 https://lily-feng.github.io/Reinforcement-Learning/demos/multi-armed-bandits/epsilon-greedy/
 ```
 
@@ -189,18 +199,18 @@ export default defineConfig({
       // This array is the reading order. Easy to complex, top to bottom.
       sidebar: [
         { label: 'Getting started', link: '/getting-started/' },
-        { label: 'Foundations', autogenerate: { directory: 'chapters/foundations' } },
-        { label: 'Multi-armed bandits', autogenerate: { directory: 'chapters/multi-armed-bandits' } },
-        { label: 'Markov decision processes', autogenerate: { directory: 'chapters/markov-decision-processes' } },
-        { label: 'Dynamic programming', autogenerate: { directory: 'chapters/dynamic-programming' } },
-        { label: 'Monte Carlo methods', autogenerate: { directory: 'chapters/monte-carlo-methods' } },
-        { label: 'Temporal-difference learning', autogenerate: { directory: 'chapters/temporal-difference-learning' } },
-        { label: 'n-step and eligibility traces', autogenerate: { directory: 'chapters/n-step-and-eligibility-traces' } },
-        { label: 'Planning and learning', autogenerate: { directory: 'chapters/planning-and-learning' } },
-        { label: 'Function approximation', autogenerate: { directory: 'chapters/function-approximation' } },
-        { label: 'Deep Q-networks', autogenerate: { directory: 'chapters/deep-q-networks' } },
-        { label: 'Policy gradient methods', autogenerate: { directory: 'chapters/policy-gradient-methods' } },
-        { label: 'Advanced policy optimization', autogenerate: { directory: 'chapters/advanced-policy-optimization' } },
+        { label: 'Foundations', autogenerate: { directory: 'chapters/01-foundations' } },
+        { label: 'Multi-armed bandits', autogenerate: { directory: 'chapters/02-multi-armed-bandits' } },
+        { label: 'Markov decision processes', autogenerate: { directory: 'chapters/03-markov-decision-processes' } },
+        { label: 'Dynamic programming', autogenerate: { directory: 'chapters/04-dynamic-programming' } },
+        { label: 'Monte Carlo methods', autogenerate: { directory: 'chapters/05-monte-carlo-methods' } },
+        { label: 'Temporal-difference learning', autogenerate: { directory: 'chapters/06-temporal-difference-learning' } },
+        { label: 'n-step and eligibility traces', autogenerate: { directory: 'chapters/07-n-step-and-eligibility-traces' } },
+        { label: 'Planning and learning', autogenerate: { directory: 'chapters/08-planning-and-learning' } },
+        { label: 'Function approximation', autogenerate: { directory: 'chapters/09-function-approximation' } },
+        { label: 'Deep Q-networks', autogenerate: { directory: 'chapters/10-deep-q-networks' } },
+        { label: 'Policy gradient methods', autogenerate: { directory: 'chapters/11-policy-gradient-methods' } },
+        { label: 'Advanced policy optimization', autogenerate: { directory: 'chapters/12-advanced-policy-optimization' } },
       ],
     }),
   ],
@@ -208,8 +218,9 @@ export default defineConfig({
 ```
 
 Page order *within* a chapter is set with `sidebar.order` in each page's
-frontmatter. Chapter order is the array above. Neither mechanism puts a number
-in a URL.
+frontmatter; those never appear in a URL. Chapter order is the array above, and
+must be kept in step with the directory prefixes — the prefix is what readers
+see, the array is what the sidebar renders.
 
 ## GitHub Pages deployment
 
@@ -250,7 +261,8 @@ Phases 1-3 are implemented and verified. Phase 4 is the ongoing work.
 - Astro Starlight scaffolded; Node pinned in `.nvmrc`.
 - `site` / `base` configured for the project subpath.
 - Math pipeline (`remark-math` + `rehype-katex` + KaTeX CSS) wired in.
-- Sidebar array drives reading order; all 12 chapters navigable.
+- Sidebar array drives reading order; all 12 chapters navigable, each
+  directory prefixed `01-` through `12-`.
 - `.github/workflows/pages.yml` validates pull requests and deploys `main`.
 - Verified: `npm run check` clean, `npm run build` produces 18 pages, and
   `starlight-links-validator` reports every internal link valid.
@@ -280,7 +292,8 @@ Phases 1-3 are implemented and verified. Phase 4 is the ongoing work.
 
 Work down the reading-order table. For each subject:
 
-1. Add or select the chapter directory (no numeric prefix).
+1. Add or select the chapter directory, prefixed with its reading-order
+   number (`13-…`). Append rather than insert, so existing URLs survive.
 2. Add the entry to the `sidebar` array in reading-order position.
 3. Copy the topic-page template; fill the six required sections.
 4. Add the demo as a pure core plus a rendering layer.

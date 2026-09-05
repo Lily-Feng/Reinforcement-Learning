@@ -63,8 +63,8 @@ its exploration can get sublinear regret.
 
 ## Contents
 
-- [Action-value methods](/Reinforcement-Learning/chapters/multi-armed-bandits/action-value-methods/) — how to estimate $q_*(a)$ from experience.
-- [Epsilon-greedy](/Reinforcement-Learning/chapters/multi-armed-bandits/epsilon-greedy/) — the simplest exploration rule that works, with an interactive simulator.
+- [Action-value methods](/Reinforcement-Learning/chapters/02-multi-armed-bandits/action-value-methods/) — how to estimate $q_*(a)$ from experience.
+- [Epsilon-greedy](/Reinforcement-Learning/chapters/02-multi-armed-bandits/epsilon-greedy/) — the simplest exploration rule that works, with an interactive simulator.
 
 ## Personal takeaways
 

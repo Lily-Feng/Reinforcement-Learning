@@ -17,7 +17,12 @@ export function demoUrl(chapter: string, demo: string): string {
   return withBase(`demos/${chapter}/${demo}/`);
 }
 
-/** Canonical route for a chapter page. */
+/**
+ * Canonical route for a chapter page.
+ *
+ * `chapter` includes the reading-order prefix, e.g. "02-multi-armed-bandits".
+ * Demo slugs do NOT carry a prefix — see `demoUrl`.
+ */
 export function chapterUrl(chapter: string, page = ''): string {
   return withBase(`chapters/${chapter}/${page}`);
 }

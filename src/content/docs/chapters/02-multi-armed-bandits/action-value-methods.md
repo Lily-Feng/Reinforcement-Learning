@@ -109,7 +109,7 @@ new idea.
 ## Where next
 
 Estimates alone do not tell you when to act on them.
-[Epsilon-greedy](/Reinforcement-Learning/chapters/multi-armed-bandits/epsilon-greedy/)
+[Epsilon-greedy](/Reinforcement-Learning/chapters/02-multi-armed-bandits/epsilon-greedy/)
 is the simplest rule for deciding when to trust $Q$ and when to look elsewhere.
 
 ## References
