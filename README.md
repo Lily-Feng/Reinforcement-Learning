@@ -245,22 +245,30 @@ diagnostics but **not** internal links. Link checking comes from the
 `starlight-links-validator` plugin above, so a broken cross-chapter link fails
 the pull request build.
 
-### Enabling Pages
+### Enabling Pages — one manual step, required once
 
-`actions/configure-pages` is run with `enablement: true`, so the first
-successful workflow run turns Pages on by itself. That is why the `build` job
-carries `pages: write` — the API call needs it.
+Before the first deploy can succeed, set:
 
-Without that flag the first run fails with:
+**Settings → Pages → Build and deployment → Source → GitHub Actions**
+
+Until that is done the `build` job fails with:
 
 ```text
 Get Pages site failed. Please verify that the repository has Pages enabled and
 configured to build using GitHub Actions
 ```
 
-The manual equivalent, if the API route is ever blocked (private repo on a plan
-without Pages, or restricted workflow permissions), is
-**Settings → Pages → Source → GitHub Actions**.
+This cannot be automated from inside the workflow. `configure-pages` accepts an
+`enablement: true` input, but *creating* a Pages site requires repository admin
+rights, and `GITHUB_TOKEN` does not have them even when granted `pages: write`.
+Attempting it fails differently, which is a worse error, not a fix:
+
+```text
+Create Pages site failed. Error: Resource not accessible by integration
+```
+
+If the `deploy` job later fails on permissions rather than on the Pages site,
+check **Settings → Actions → General → Workflow permissions** as well.
 
 ### Action versions
 

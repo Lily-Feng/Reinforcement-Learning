@@ -47,8 +47,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      # Needed by configure-pages `enablement` below, which calls the Pages API.
-      pages: write
     steps:
       - uses: actions/checkout@v7
 
@@ -65,12 +63,12 @@ jobs:
       - name: Build
         run: npm run build
 
-      # `enablement: true` turns Pages on via the API if it is not already
-      # configured, instead of failing with "Get Pages site failed". The manual
-      # equivalent is Settings -> Pages -> Source -> GitHub Actions.
+      # No `enablement: true` here. GITHUB_TOKEN can hold `pages: write`, but
+      # CREATING a Pages site needs repo-admin rights it does not have, so the
+      # call fails with "Resource not accessible by integration". Pages has to
+      # be switched on once by hand:
+      #   Settings -> Pages -> Build and deployment -> Source -> GitHub Actions
       - uses: actions/configure-pages@v6
-        with:
-          enablement: true
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
