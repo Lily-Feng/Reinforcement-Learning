@@ -84,8 +84,11 @@ $$
 The weight on a reward decays exponentially with how long ago it arrived. This is
 an **exponential recency-weighted average**: it never fully converges, which is
 exactly what you want when $q_*(a)$ drifts over time. For the stationary bandit
-in this chapter, $1/n$ is the better choice; for anything non-stationary, a
-constant $\alpha$ is.
+in this chapter, $1/n$ is the better choice; for anything nonstationary, a
+constant $\alpha$ is. [Tracking a nonstationary
+problem](/Reinforcement-Learning/chapters/02-multi-armed-bandits/nonstationary-problems/)
+takes that claim apart: what the exponential weighting costs, and why an
+estimator that never converges is the one you want when the target moves.
 
 ## Common mistakes
 
