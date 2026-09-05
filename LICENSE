@@ -1,0 +1,51 @@
+This repository is dual-licensed.
+
+================================================================================
+CODE — MIT License
+================================================================================
+
+Applies to all source code, including everything under src/demos/, src/lib/,
+src/components/, src/pages/, configuration files, and the GitHub Actions
+workflows.
+
+Copyright (c) 2026 Lily Feng
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+================================================================================
+WRITTEN CONTENT — CC BY 4.0
+================================================================================
+
+Applies to all prose, including everything under src/content/.
+
+Licensed under the Creative Commons Attribution 4.0 International License.
+https://creativecommons.org/licenses/by/4.0/
+
+================================================================================
+ATTRIBUTION
+================================================================================
+
+Notation, problem formulations, and several worked examples follow:
+
+  Sutton, R. S. & Barto, A. G. (2018). Reinforcement Learning: An Introduction
+  (2nd ed.). MIT Press.
+
+That book is the source of the field's standard notation and is cited per
+chapter. It is not covered by the licenses above; this repository claims no
+rights over it.

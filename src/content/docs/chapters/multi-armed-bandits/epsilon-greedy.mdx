@@ -1,0 +1,181 @@
+---
+title: Epsilon-greedy
+description: "The simplest exploration rule that works — act greedily most of the time, act randomly occasionally — with an interactive simulator."
+sidebar:
+  order: 3
+---
+
+import DemoFrame from '../../../../components/DemoFrame.astro';
+
+## Learning objective
+
+Be able to implement epsilon-greedy from memory, predict how changing
+$\varepsilon$ changes both learning speed and final performance, and explain why
+the best $\varepsilon$ depends on how long you get to play.
+
+## Intuition
+
+A purely greedy agent always pulls the arm with the highest current estimate.
+That fails in a specific and avoidable way: one lucky early win on a mediocre arm
+makes it look best, the agent keeps pulling it, and the genuinely best arm is
+never tried again. Its estimate stays at its initial value forever. The agent
+locks onto a bad answer and never collects the evidence that would change its
+mind.
+
+Epsilon-greedy fixes this with the least machinery possible. Before each pull,
+flip a biased coin. With probability $\varepsilon$, ignore everything you know
+and pick uniformly at random. Otherwise act greedily.
+
+That is the entire algorithm. Its guarantee is crude but real: every arm gets
+pulled infinitely often in the limit, so every $Q_t(a)$ converges to $q_*(a)$,
+so the greedy action eventually is the optimal one.
+
+## Algorithm
+
+$$
+A_t =
+\begin{cases}
+\arg\max_a Q_t(a) & \text{with probability } 1 - \varepsilon \\[4pt]
+a \sim \mathrm{Uniform}(\mathcal{A}) & \text{with probability } \varepsilon
+\end{cases}
+$$
+
+<div class="pseudocode">
+
+**Epsilon-greedy, sample-average estimates**
+
+Initialise, for $a = 1$ to $k$: &nbsp; $Q(a) \leftarrow 0$, &nbsp; $N(a) \leftarrow 0$
+
+**Loop forever:**
+
+$\quad A \leftarrow \begin{cases} \arg\max_a Q(a) & \text{w.p. } 1-\varepsilon \;\text{(ties broken randomly)} \\ \text{a random action} & \text{w.p. } \varepsilon \end{cases}$
+
+$\quad R \leftarrow \mathrm{bandit}(A)$
+
+$\quad N(A) \leftarrow N(A) + 1$
+
+$\quad Q(A) \leftarrow Q(A) + \dfrac{1}{N(A)}\left[R - Q(A)\right]$
+
+</div>
+
+Note that the greedy branch takes a random action $\varepsilon/k$ of the time by
+coincidence, so the true probability of selecting the greedy action is
+$1 - \varepsilon + \varepsilon/k$.
+
+## Worked example
+
+Three arms, $\varepsilon = 0.1$, all estimates starting at 0.
+
+| Pull | Coin | Branch | Action | Reward | Update |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 0.83 | exploit | 3-way tie → arm 2 | 1 | $Q(2) = 0 + \tfrac11(1-0) = 1.00$ |
+| 2 | 0.42 | exploit | arm 2 (highest $Q$) | 0 | $Q(2) = 1 + \tfrac12(0-1) = 0.50$ |
+| 3 | 0.07 | **explore** | arm 3 (random) | 1 | $Q(3) = 0 + \tfrac11(1-0) = 1.00$ |
+| 4 | 0.91 | exploit | arm 3 (highest $Q$) | 0 | $Q(3) = 1 + \tfrac12(0-1) = 0.50$ |
+| 5 | 0.55 | exploit | 2-way tie → arm 2 | 1 | $Q(2) = 0.5 + \tfrac13(1-0.5) = 0.67$ |
+
+Two things to notice. Pull 3 is the whole point of the algorithm: arm 3 would
+never have been tried by a greedy agent, and it turned out to be worth trying.
+And after a single win an estimate reads 1.00 — early estimates are wildly
+overconfident because they average over one sample.
+
+## Interactive demo
+
+Step through it one pull at a time and watch the branch taken, or turn on
+auto-play and watch the estimates converge. The seed field makes any run
+reproducible.
+
+<DemoFrame
+  chapter="multi-armed-bandits"
+  demo="epsilon-greedy"
+  title="Epsilon-greedy multi-armed bandit simulator"
+  source="src/demos/bandits/core.ts"
+/>
+
+## What to observe
+
+**Set $\varepsilon = 0$ and step repeatedly.** The agent latches onto whichever
+arm happens to win first and never leaves. Reveal the true rates and you will
+usually find it is sitting on a mediocre arm. This is the failure epsilon-greedy
+exists to prevent.
+
+**Set $\varepsilon = 1$.** Every pull is random. The estimates become excellent —
+every arm is sampled evenly — and the reward is terrible. Perfect knowledge, no
+exploitation.
+
+**Set $\varepsilon = 0.1$ and run a few hundred steps.** The best arm accumulates
+most of the pulls while the others keep getting sampled occasionally. Watch the
+"% optimal action" curve rise and then flatten.
+
+**Note the ceiling.** With $\varepsilon = 0.1$ and 5 arms, the agent takes a
+random action 10% of the time forever, so it plays optimally at most
+$1 - \varepsilon + \varepsilon/k = 92\%$ of the time. The curve flattens below
+100% by construction, not because learning stalled.
+
+**Run the comparison.** This is the most important panel on the page. Four
+$\varepsilon$ values, 150 independent runs each, 2000 steps, all facing the same
+set of environments.
+
+- $\varepsilon = 0$ climbs fastest for about fifty steps, then goes flat well
+  below everything else. Across 200 seeds it ends up on a clearly suboptimal arm
+  roughly 70% of the time.
+- $\varepsilon = 0.3$ learns quickly and then stays low: it throws away three
+  pulls in ten forever.
+- $\varepsilon = 0.1$ leads for the first ~1500 steps.
+- $\varepsilon = 0.01$ is worst early and **crosses above $\varepsilon = 0.1$ at
+  around step 1500**, ending near 0.89 against 0.86.
+
+The crossover is the entire lesson. Neither value is better; the horizon decides.
+Note also that $\varepsilon = 0.1$ still has the higher *cumulative* average at
+step 2000 — it banked its lead early — even though $\varepsilon = 0.01$ is
+clearly ahead instantaneously by then. Which number you quote changes the
+answer.
+
+## Common mistakes
+
+**Breaking ties by index.** With all estimates at 0, `argmax` returns arm 0 every
+time. The agent then only ever explores by accident and the demo looks broken.
+Ties must be broken uniformly at random.
+
+**Comparing $\varepsilon$ values on one run.** A single run is dominated by luck.
+The comparison panel averages 150 independent runs for this reason, and holds the
+set of environments fixed so every $\varepsilon$ faces the same problems. Compare
+two methods on one seed and you are mostly measuring the seed.
+
+**Exploring uniformly among the obviously-bad.** Epsilon-greedy's random branch
+is uniform: an arm already pulled 200 times with a terrible payout is just as
+likely to be explored as a promising one that has been pulled twice. This is the
+weakness UCB addresses.
+
+**Leaving $\varepsilon$ constant when the run is long.** Fixed $\varepsilon$
+means regret grows linearly forever. Decaying it — $\varepsilon_t = 1/t$, say —
+gets the early exploration without paying for it indefinitely.
+
+## Experiments to try
+
+1. Set $\varepsilon = 0.5$ for the first 50 pulls, then drop it to 0.01. Compare
+   the total against a constant $\varepsilon = 0.1$ over the same seed.
+2. Find a seed where $\varepsilon = 0$ beats $\varepsilon = 0.1$ over 200 steps,
+   and explain why that is not evidence that greedy is better.
+3. Predict the flat-line value of "% optimal action" for $\varepsilon = 0.3$
+   before running it, using $1 - \varepsilon + \varepsilon/k$. Then run it.
+4. Find the crossover step where $\varepsilon = 0.01$ overtakes
+   $\varepsilon = 0.1$. Re-run with a different seed and see how much it moves.
+5. Watch regret rather than reward. Note that it never decreases, and compare its
+   slope across $\varepsilon$ values.
+
+## Personal takeaways
+
+The thing that surprised me is that the best $\varepsilon$ is a function of your
+time budget, not a property of the problem. Small $\varepsilon$ wins asymptotically
+and loses over a short horizon. Asking "what is the best $\varepsilon$" without
+saying how many steps you get is asking an incomplete question.
+
+The second thing: epsilon-greedy explores *stupidly*. It knows which arms it is
+uncertain about and throws that information away when it explores. Everything
+better — optimistic initialisation, UCB, Thompson sampling — comes from spending
+the exploration budget where the uncertainty actually is.
+
+## References
+
+- Sutton, R. S. & Barto, A. G. *Reinforcement Learning: An Introduction*, 2nd ed., §2.2–2.3.

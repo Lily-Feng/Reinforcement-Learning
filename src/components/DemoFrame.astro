@@ -1,0 +1,62 @@
+---
+/**
+ * Embeds a standalone demo inside a chapter page.
+ *
+ * This is the ONLY place a demo URL is constructed. Astro does not prefix
+ * root-absolute links with `base`, so a hand-written `/demos/...` href works in
+ * dev and 404s on GitHub Pages. Routing every embed through here means no page
+ * can reintroduce that bug.
+ */
+import { demoUrl, sourceUrl } from '../lib/url';
+
+interface Props {
+  /** Chapter directory, e.g. "multi-armed-bandits". */
+  chapter: string;
+  /** Demo slug, e.g. "epsilon-greedy". */
+  demo: string;
+  /** Accessible title for the iframe. */
+  title: string;
+  /** Repo-relative path to the demo's source, for the View source link. */
+  source?: string;
+  /** Iframe height. Demos are responsive, so this is a starting point. */
+  height?: string;
+}
+
+const { chapter, demo, title, source, height = '780px' } = Astro.props;
+const href = demoUrl(chapter, demo);
+---
+
+<figure class="demo-frame">
+  <iframe
+    src={href}
+    title={title}
+    height={height}
+    loading="lazy"
+  ></iframe>
+  <figcaption>
+    <a href={href} target="_blank" rel="noopener">Open demo full screen ↗</a>
+    {source && <a href={sourceUrl(source)} target="_blank" rel="noopener">View source ↗</a>}
+  </figcaption>
+</figure>
+
+<style>
+  .demo-frame {
+    margin: 1.5rem 0;
+  }
+
+  .demo-frame iframe {
+    width: 100%;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.5rem;
+    background: #0f172a;
+    display: block;
+  }
+
+  .demo-frame figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+  }
+</style>

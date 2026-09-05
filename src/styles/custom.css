@@ -1,0 +1,40 @@
+/* Site-wide overrides layered on top of Starlight's defaults. */
+
+:root {
+  --sl-content-width: 50rem;
+}
+
+/* KaTeX display equations get their own breathing room and scroll on narrow
+   screens rather than forcing the page to scroll sideways. */
+.katex-display {
+  margin: 1.25rem 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding-bottom: 0.25rem;
+}
+
+/* Algorithm pseudocode blocks. */
+.pseudocode {
+  border: 1px solid var(--sl-color-gray-5);
+  border-left: 3px solid var(--sl-color-accent);
+  border-radius: 0.35rem;
+  padding: 1rem 1.15rem;
+  margin: 1.5rem 0;
+  background: var(--sl-color-gray-7);
+  font-size: 0.925rem;
+}
+
+.pseudocode > :first-child {
+  margin-top: 0;
+}
+
+.pseudocode > :last-child {
+  margin-bottom: 0;
+}
+
+/* Wide tables scroll inside their own container. */
+.sl-markdown-content table {
+  display: block;
+  overflow-x: auto;
+  max-width: 100%;
+}

@@ -1,0 +1,345 @@
+---
+import { chapterUrl, sourceUrl } from '../../../lib/url';
+
+const backHref = chapterUrl('multi-armed-bandits', 'epsilon-greedy/');
+const srcHref = sourceUrl('src/demos/bandits/core.ts');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Epsilon-Greedy Simulator</title>
+    <meta
+      name="description"
+      content="Interactive multi-armed bandit simulator showing exploration versus exploitation under an epsilon-greedy policy."
+    />
+  </head>
+  <body>
+    <div class="demo">
+      <header class="topbar">
+        <div class="topbar__titles">
+          <h1>Epsilon-greedy simulator</h1>
+          <p>Exploration vs. exploitation on a 5-armed Bernoulli bandit</p>
+        </div>
+        <dl class="stats" aria-live="polite">
+          <div class="stat">
+            <dt>Pulls</dt>
+            <dd data-stat-pulls>0</dd>
+          </div>
+          <div class="stat">
+            <dt>Avg reward</dt>
+            <dd data-stat-reward>—</dd>
+          </div>
+          <div class="stat">
+            <dt>Optimal action</dt>
+            <dd data-stat-optimal>—</dd>
+          </div>
+          <div class="stat">
+            <dt>Regret</dt>
+            <dd data-stat-regret>0.00</dd>
+          </div>
+        </dl>
+        <a class="topbar__back" href={backHref}>← Back to the chapter</a>
+      </header>
+
+      <main class="layout">
+        <aside class="panel controls" aria-label="Algorithm controls">
+          <section class="controls__group">
+            <h2>Parameters</h2>
+
+            <div class="field">
+              <label for="epsilon">
+                Epsilon (ε)
+                <output data-epsilon-value for="epsilon">0.10</output>
+              </label>
+              <input
+                type="range"
+                id="epsilon"
+                data-epsilon
+                min="0"
+                max="1"
+                step="0.01"
+                value="0.1"
+              />
+              <div class="field__ends">
+                <span>0 · always exploit</span>
+                <span>1 · always explore</span>
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="seed">Seed</label>
+              <input type="text" id="seed" data-seed inputmode="numeric" value="20260904" />
+              <p class="field__hint">
+                Same seed, same arms, same run. Change it to face a different problem.
+              </p>
+            </div>
+          </section>
+
+          <section class="controls__group">
+            <h2>Run</h2>
+            <div class="buttons">
+              <button type="button" class="btn btn--primary" data-step>Step once</button>
+              <button type="button" class="btn" data-auto aria-pressed="false">Auto-play</button>
+              <button type="button" class="btn" data-reset>Reset run</button>
+              <button type="button" class="btn btn--ghost" data-new-env>New environment</button>
+            </div>
+
+            <label class="switch">
+              <input type="checkbox" data-truth />
+              <span>Reveal true win rates</span>
+            </label>
+          </section>
+
+          <section class="controls__group controls__group--log">
+            <h2>Decision log</h2>
+            <ol class="log" data-log aria-live="polite" aria-label="Recent decisions"></ol>
+          </section>
+        </aside>
+
+        <section class="content">
+          <section class="panel" aria-labelledby="arms-heading">
+            <h2 id="arms-heading">The arms</h2>
+            <div class="arms" data-arms></div>
+          </section>
+
+          <section class="panel" aria-labelledby="chart-heading">
+            <h2 id="chart-heading">This run</h2>
+            <ul class="legend legend--static">
+              <li class="legend__item">
+                <span class="legend__swatch" style="background:#10b981"></span>Average reward
+              </li>
+              <li class="legend__item">
+                <span class="legend__swatch" style="background:#818cf8"></span>% optimal action
+              </li>
+            </ul>
+            <div class="chart">
+              <p class="chart__hint" data-chart-hint>Step at least twice to plot this run.</p>
+              <canvas
+                data-chart
+                role="img"
+                aria-label="Average reward and share of optimal actions over time for the current run"
+              ></canvas>
+            </div>
+          </section>
+
+          <section class="panel" aria-labelledby="compare-heading">
+            <h2 id="compare-heading">Compare epsilon values</h2>
+            <p class="panel__note">
+              A single run is mostly luck. This averages many independent runs so the
+              curves separate.
+            </p>
+            <button type="button" class="btn btn--primary" data-compare>Run comparison</button>
+            <p class="status" data-compare-status aria-live="polite">Not run yet.</p>
+            <ul class="legend" data-compare-legend></ul>
+            <div class="chart">
+              <canvas
+                data-compare-chart
+                role="img"
+                aria-label="Average reward over time for several epsilon values"
+              ></canvas>
+            </div>
+          </section>
+
+          <p class="source">
+            <a href={srcHref}>View the simulation source</a>
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script>
+      import { initEpsilonGreedyDemo } from '../../../demos/bandits/render';
+      initEpsilonGreedyDemo();
+    </script>
+
+    <style is:global>
+      :root {
+        --bg: #0f172a;
+        --panel: #1e293b;
+        --panel-2: #0b1220;
+        --line: #334155;
+        --text: #e2e8f0;
+        --muted: #94a3b8;
+        --accent: #818cf8;
+        --win: #10b981;
+        --lose: #f87171;
+        --gold: #fbbf24;
+      }
+
+      * { box-sizing: border-box; }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+        font-size: 15px;
+        line-height: 1.5;
+      }
+
+      h1, h2, h3 { margin: 0; line-height: 1.25; }
+
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+
+      .demo { min-height: 100vh; display: flex; flex-direction: column; }
+
+      .topbar {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem 1.5rem;
+        align-items: center;
+        justify-content: space-between;
+        padding: 1rem 1.25rem;
+        background: var(--panel);
+        border-bottom: 1px solid var(--line);
+      }
+      .topbar__titles h1 { font-size: 1.25rem; }
+      .topbar__titles p { margin: 0.15rem 0 0; color: var(--muted); font-size: 0.85rem; }
+      .topbar__back { color: var(--accent); font-size: 0.85rem; text-decoration: none; }
+      .topbar__back:hover { text-decoration: underline; }
+
+      .stats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0; }
+      .stat {
+        min-width: 6.5rem;
+        padding: 0.4rem 0.75rem;
+        background: var(--panel-2);
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        text-align: center;
+      }
+      .stat dt { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+      .stat dd { margin: 0.1rem 0 0; font-size: 1.05rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+      .layout {
+        flex: 1;
+        display: grid;
+        grid-template-columns: minmax(260px, 320px) 1fr;
+        gap: 1rem;
+        padding: 1rem;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 1rem;
+      }
+      .panel h2 { font-size: 0.95rem; margin-bottom: 0.75rem; }
+      .panel__note { margin: 0 0 0.75rem; color: var(--muted); font-size: 0.85rem; }
+
+      .controls { display: flex; flex-direction: column; gap: 1.25rem; position: sticky; top: 1rem; }
+      .controls__group h2 {
+        font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+      }
+
+      .field { margin-bottom: 1rem; }
+      .field label {
+        display: flex; justify-content: space-between; align-items: baseline;
+        font-size: 0.85rem; font-weight: 600; margin-bottom: 0.4rem;
+      }
+      .field output { font-variant-numeric: tabular-nums; color: var(--accent); font-weight: 700; }
+      .field input[type="range"] { width: 100%; accent-color: var(--accent); }
+      .field input[type="text"] {
+        width: 100%; padding: 0.4rem 0.6rem; border-radius: 6px;
+        border: 1px solid var(--line); background: var(--panel-2); color: var(--text);
+        font-family: ui-monospace, monospace;
+      }
+      .field__ends { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-top: 0.25rem; }
+      .field__hint { margin: 0.4rem 0 0; font-size: 0.75rem; color: var(--muted); }
+
+      .buttons { display: grid; gap: 0.5rem; margin-bottom: 0.85rem; }
+      .btn {
+        padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--line);
+        background: #334155; color: var(--text); font: inherit; font-weight: 600;
+        cursor: pointer; transition: background 0.15s, border-color 0.15s;
+      }
+      .btn:hover:not(:disabled) { background: #475569; }
+      .btn:disabled { opacity: 0.55; cursor: progress; }
+      .btn--primary { background: #4f46e5; border-color: #4f46e5; }
+      .btn--primary:hover:not(:disabled) { background: #6366f1; }
+      .btn--ghost { background: transparent; }
+
+      .switch { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; cursor: pointer; }
+      .switch input { accent-color: var(--win); width: 1rem; height: 1rem; }
+
+      .controls__group--log { display: flex; flex-direction: column; min-height: 0; }
+      .log { list-style: none; margin: 0; padding: 0; max-height: 16rem; overflow-y: auto; display: grid; gap: 0.4rem; }
+      .log__entry { padding: 0.5rem 0.6rem; border-radius: 6px; border: 1px solid; font-size: 0.78rem; }
+      .log__entry--explore { background: rgba(96, 165, 250, 0.1); border-color: rgba(96, 165, 250, 0.35); }
+      .log__entry--exploit { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.35); }
+      .log__head { display: flex; justify-content: space-between; gap: 0.5rem; font-weight: 700; }
+      .log__entry--explore .log__kind { color: #60a5fa; }
+      .log__entry--exploit .log__kind { color: var(--win); }
+      .log__arm { color: var(--muted); font-weight: 500; }
+      .log__why { margin: 0.2rem 0 0; color: var(--muted); font-family: ui-monospace, monospace; font-size: 0.72rem; }
+
+      .content { display: grid; gap: 1rem; }
+
+      .arms { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem; }
+      .arm {
+        position: relative; padding: 0.85rem 0.75rem; border-radius: 10px;
+        background: var(--panel-2); border: 1px solid var(--line);
+        display: grid; gap: 0.5rem; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+      }
+      .arm__crown {
+        position: absolute; top: -0.6rem; left: 50%; transform: translateX(-50%);
+        background: var(--gold); color: #1f2937; font-size: 0.6rem; font-weight: 700;
+        padding: 0.1rem 0.45rem; border-radius: 999px; white-space: nowrap;
+      }
+      .arm__title { font-size: 0.9rem; text-align: center; }
+      .arm__label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+      .arm__estimate { display: grid; gap: 0.1rem; text-align: center; padding: 0.4rem; background: rgba(148, 163, 184, 0.08); border-radius: 6px; }
+      .arm__value { font-size: 1.25rem; font-weight: 700; font-family: ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+      .arm__value--unknown { color: #475569; }
+      .arm__counts { display: flex; justify-content: space-between; font-size: 0.72rem; color: var(--muted); }
+      .arm__truth { display: grid; gap: 0.2rem; opacity: 0; transition: opacity 0.25s; }
+      .arm--revealed .arm__truth { opacity: 1; }
+      .arm__track { height: 5px; background: #1f2937; border-radius: 999px; overflow: hidden; }
+      .arm__bar { height: 100%; background: var(--accent); }
+      .arm__truth-value { font-size: 0.7rem; font-family: ui-monospace, monospace; color: var(--accent); text-align: right; }
+
+      .arm--explore { border-color: #60a5fa; box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.35); }
+      .arm--exploit { border-color: var(--win); box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.35); }
+      .arm--win { background: rgba(16, 185, 129, 0.16); }
+      .arm--loss { background: rgba(248, 113, 113, 0.14); }
+
+      .chart { position: relative; width: 100%; height: 260px; }
+      .chart canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+      .chart__hint {
+        position: absolute; inset: 0; margin: 0; display: grid; place-items: center;
+        color: var(--muted); font-size: 0.85rem; text-align: center; pointer-events: none;
+      }
+      /* A class selector beats [hidden]'s display:none, so restate it. */
+      .chart__hint[hidden] { display: none; }
+
+      .log__empty { color: var(--muted); font-size: 0.78rem; font-style: italic; padding: 0.5rem 0; }
+
+      .legend { list-style: none; display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; margin: 0 0 0.6rem; padding: 0; font-size: 0.78rem; }
+      .legend__item { display: flex; align-items: center; gap: 0.4rem; }
+      .legend__swatch { width: 0.7rem; height: 0.7rem; border-radius: 2px; flex: none; }
+      .legend__detail { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+      .status { margin: 0.6rem 0; font-size: 0.78rem; color: var(--muted); }
+      .source { margin: 0; font-size: 0.8rem; }
+      .source a { color: var(--accent); }
+
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: 1fr; }
+        .controls { position: static; }
+        .log { max-height: 12rem; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { transition: none !important; animation: none !important; }
+      }
+    </style>
+  </body>
+</html>
