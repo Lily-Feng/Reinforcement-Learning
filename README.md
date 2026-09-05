@@ -235,16 +235,41 @@ GitHub Actions builds and deploys using the supported Pages artifact workflow:
 - Prevent overlapping deployments with a concurrency group.
 - Publish only Astro's generated `dist/`.
 
-Node is pinned in `.nvmrc` and the workflow's `node-version` reads from it, so
-CI and local builds cannot drift across Astro-sensitive Node majors.
+Node is pinned in `.nvmrc` (24) and the workflow reads it via
+`node-version-file`, so CI cannot drift across Astro-sensitive Node majors.
+This is the runtime for `npm`; the Node version the *actions themselves* run on
+is set by the action major, which is a separate axis.
 
 `npm run check` runs `astro check`, which covers TypeScript and component
 diagnostics but **not** internal links. Link checking comes from the
 `starlight-links-validator` plugin above, so a broken cross-chapter link fails
 the pull request build.
 
-Pages must be configured once under **Settings → Pages → Source → GitHub
-Actions**.
+### Enabling Pages
+
+`actions/configure-pages` is run with `enablement: true`, so the first
+successful workflow run turns Pages on by itself. That is why the `build` job
+carries `pages: write` — the API call needs it.
+
+Without that flag the first run fails with:
+
+```text
+Get Pages site failed. Please verify that the repository has Pages enabled and
+configured to build using GitHub Actions
+```
+
+The manual equivalent, if the API route is ever blocked (private repo on a plan
+without Pages, or restricted workflow permissions), is
+**Settings → Pages → Source → GitHub Actions**.
+
+### Action versions
+
+All actions are pinned to majors that run on Node 24. Node 20 is deprecated on
+GitHub runners, and actions targeting it emit a warning and are force-migrated.
+When bumping, check that the inputs still exist — `configure-pages` needs
+`enablement`, `setup-node` needs `node-version-file` and `cache`,
+`upload-pages-artifact` needs `path`, and `deploy-pages` must still expose the
+`page_url` output used by the deployment environment.
 
 References:
 
