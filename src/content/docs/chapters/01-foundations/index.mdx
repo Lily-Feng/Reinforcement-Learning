@@ -1,0 +1,105 @@
+---
+title: Three threads of reinforcement learning
+description: "How trial and error, optimal control, and temporal-difference learning grew separately—and finally met in Q-learning."
+sidebar:
+  order: 1
+---
+
+import HistoryTimeline from '../../../../components/HistoryTimeline.astro';
+
+Reinforcement learning did not begin as one neat branch of machine learning.
+For more than a century, three groups worked on different versions of the same
+question without yet sharing a language:
+
+- **Psychologists** asked how consequences change behaviour.
+- **Control theorists** asked how a sequence of decisions can maximise a
+  long-term objective.
+- **Prediction researchers** asked how one estimate can learn from the next.
+
+Modern RL appeared when those three threads were finally braided together.
+
+:::note[Why begin with history?]
+The algorithms later in this book make more sense when you can see which
+problem each one inherited. Exploration comes from trial and error, Bellman
+equations come from optimal control, and bootstrapping comes from temporal
+difference.
+:::
+
+## Three problems looking for each other
+
+### Trial and error: what should I do again?
+
+This is the oldest thread. An action followed by a satisfying result becomes
+more likely; an action followed by discomfort becomes less likely. It sounds
+simple, but it creates the defining RL dilemma: the learner must act to discover
+which actions are good, and every experiment has a real consequence.
+
+This thread gives RL its **agent**, **actions**, **rewards**, and the tension
+between **exploration** and **exploitation**.
+
+### Optimal control: what is this situation worth?
+
+Control theory approached the problem from mathematics rather than psychology.
+Given a model of a changing system, which sequence of decisions produces the
+best total outcome? Richard Bellman’s answer was to break the problem into
+smaller problems and assign each situation a **value**.
+
+This thread gives RL Markov decision processes, value functions, Bellman
+equations, and dynamic programming.
+
+### Temporal difference: was my prediction too high or too low?
+
+The third thread learns by comparing two successive predictions. You do not
+have to wait until a chess game—or a life—ends before updating an earlier
+estimate. If the next moment looks better than expected, revise upward now; if
+it looks worse, revise downward.
+
+This thread gives RL **bootstrapping**: improving an estimate using another
+estimate before the final outcome is known.
+
+## Follow the threads
+
+Use the filters to isolate one lineage, then return to **All threads** and watch
+the ideas begin to cross. The brighter cards mark the moments that changed the
+direction of the field.
+
+<HistoryTimeline />
+
+## 1989: the braid
+
+Watkins’s Q-learning is the hinge of the story. It learns by trial and error,
+uses the value-based structure of optimal control, and updates estimates by a
+temporal difference. After 1989, “reinforcement learning” increasingly names
+this combined field rather than any one of its ancestors.
+
+The familiar agent–environment loop is what the braid looks like in compact
+form:
+
+$$
+S_t \xrightarrow{A_t} R_{t+1}, S_{t+1}
+$$
+
+An **agent** observes a situation $S_t$, chooses an **action** $A_t$, and the
+**environment** returns a **reward** $R_{t+1}$ and a new situation. A **policy**
+chooses actions; a **value estimate** predicts long-term reward. Every chapter
+that follows changes one part of this loop or one way of learning from it.
+
+## The map of the book is hidden in the history
+
+| Historical thread | Question it contributes | Where it reappears |
+| --- | --- | --- |
+| Trial and error | Which action should I try? | Multi-armed bandits and exploration |
+| Optimal control | What are future outcomes worth now? | MDPs and dynamic programming |
+| Temporal difference | How can one prediction improve another? | TD learning and eligibility traces |
+| The braid | How can an agent learn control from experience? | Q-learning, DQNs, and actor–critic |
+
+## Where next
+
+The next chapter removes state, delayed consequences, and almost everything
+else. What remains is the trial-and-error problem in its purest form:
+[multi-armed bandits](/Reinforcement-Learning/chapters/02-multi-armed-bandits/).
+
+## References
+
+- Sutton, R. S. & Barto, A. G. *Reinforcement Learning: An Introduction*, 2nd ed., §1.7.
+- [Three threads of reinforcement learning—interactive timeline](https://lily-feng.github.io/Calm.Data.and.AI/timeline.html?series=reinforcement-learning).

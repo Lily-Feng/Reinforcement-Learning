@@ -10,7 +10,7 @@ chapters above it and nothing below it, so reading top to bottom always works.
 
 | Chapter | What it adds |
 | --- | --- |
-| Foundations | The vocabulary: agent, environment, reward, policy, return. |
+| Foundations | The three historical threads that became modern RL. |
 | Multi-armed bandits | Exploration vs. exploitation, with **no state**. |
 | Markov decision processes | State, transitions, value functions, Bellman equations. |
 | Dynamic programming | Exact solutions when the model is **known**. |

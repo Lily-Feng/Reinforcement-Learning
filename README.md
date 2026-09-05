@@ -1,15 +1,11 @@
 # Reinforcement Learning
 
-A chapter-based reinforcement learning book with explanations, worked examples,
+A chapter-based reinforcement learning book with explanations, worked simulation examples,
 personal takeaways, and interactive demos. The site is built with
 [Astro Starlight](https://starlight.astro.build/) and published to GitHub Pages
 by GitHub Actions.
 
-Published at:
-
-```text
-https://lily-feng.github.io/Reinforcement-Learning/
-```
+[Read the published learning notes](https://lily-feng.github.io/Reinforcement-Learning/).
 
 ## Reading order
 
@@ -26,7 +22,7 @@ appending a chapter to inserting one. Sidebar labels stay unnumbered; the
 
 | # | Chapter | Why it sits here |
 | - | ------- | ---------------- |
-| 1 | `foundations` | Agent, environment, reward, policy, return. No math machinery yet. |
+| 1 | `foundations` | Trial and error, optimal control, and temporal difference converge into modern RL. |
 | 2 | `multi-armed-bandits` | Exploration vs exploitation with **no state**. The simplest possible RL problem. |
 | 3 | `markov-decision-processes` | Introduces state, transitions, value functions, Bellman equations. |
 | 4 | `dynamic-programming` | Solves MDPs when the model is **known**. Policy evaluation, policy/value iteration. |

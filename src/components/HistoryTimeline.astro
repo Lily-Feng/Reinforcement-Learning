@@ -1,0 +1,589 @@
+---
+type Thread = 'trial' | 'control' | 'td' | 'merge';
+
+interface TimelineEvent {
+  year: string;
+  thread: Thread;
+  title: string;
+  summary: string;
+  featured?: boolean;
+}
+
+const threads: Record<Thread, { label: string; glyph: string }> = {
+  trial: { label: 'Trial and error', glyph: '◌' },
+  control: { label: 'Optimal control', glyph: '⌑' },
+  td: { label: 'Temporal difference', glyph: 'Δ' },
+  merge: { label: 'All three meet', glyph: '⋈' },
+};
+
+const events: TimelineEvent[] = [
+  {
+    year: '1850s',
+    thread: 'trial',
+    title: 'Bain: learning by “groping and experiment”',
+    summary:
+      'Woodworth traces the idea of trial-and-error learning back to Alexander Bain’s discussion in the 1850s.',
+  },
+  {
+    year: '1894',
+    thread: 'trial',
+    title: 'Lloyd Morgan names “trial and error”',
+    summary:
+      'The British ethologist uses the term explicitly to describe what he observes in animal behaviour.',
+  },
+  {
+    year: '1911',
+    thread: 'trial',
+    title: 'Thorndike’s Law of Effect',
+    summary:
+      'Responses followed by satisfaction become more likely to recur; those followed by discomfort, less likely. This is the first succinct statement of the principle.',
+    featured: true,
+  },
+  {
+    year: '1927',
+    thread: 'trial',
+    title: '“Reinforcement” enters the vocabulary',
+    summary:
+      'The word first appears in this context in the English translation of Pavlov’s monograph on conditioned reflexes.',
+  },
+  {
+    year: '1933',
+    thread: 'trial',
+    title: 'Ross builds a maze-learning machine',
+    summary:
+      'Possibly the earliest electro-mechanical learner: it finds its way through a simple maze and remembers the path in switch settings.',
+  },
+  {
+    year: '1948',
+    thread: 'trial',
+    title: 'Turing’s “pleasure–pain system”',
+    summary:
+      'A report sketches a machine that makes random choices where action is undetermined, cancelling them on pain and fixing them on pleasure.',
+  },
+  {
+    year: '1950',
+    thread: 'td',
+    title: 'Shannon: a program that improves its own evaluation',
+    summary:
+      'Shannon suggests a chess program could improve online by modifying its evaluation function—the seed of Samuel’s method.',
+  },
+  {
+    year: '1951–52',
+    thread: 'trial',
+    title: 'Walter’s tortoise and Shannon’s Theseus',
+    summary:
+      'Mechanical creatures learn simple behaviours; Shannon’s maze-running mouse finds a route by trial and error while the maze remembers through magnets and relays.',
+  },
+  {
+    year: '1954',
+    thread: 'trial',
+    title: 'SNARCs and simulated neural learning',
+    summary:
+      'Minsky describes Stochastic Neural-Analog Reinforcement Calculators, while Farley and Clark simulate a network that learns by trial and error.',
+  },
+  {
+    year: '1954',
+    thread: 'td',
+    title: 'Minsky links secondary reinforcement to machines',
+    summary:
+      'A stimulus paired with a primary reinforcer can itself become predictive—a psychological idea with consequences for artificial learning systems.',
+  },
+  {
+    year: '1953–57',
+    thread: 'control',
+    title: 'Bellman: dynamic programming and MDPs',
+    summary:
+      'Bellman defines the value function and Bellman equation, then introduces the discrete stochastic case: Markov decision processes.',
+    featured: true,
+  },
+  {
+    year: '1959',
+    thread: 'td',
+    title: 'Samuel’s checkers player',
+    summary:
+      'The first learning method to implement temporal-difference ideas is developed with no reference to Minsky or animal learning.',
+    featured: true,
+  },
+  {
+    year: '1960',
+    thread: 'control',
+    title: 'Howard’s policy iteration',
+    summary:
+      'A method for solving Markov decision processes that remains an essential element of modern reinforcement-learning theory.',
+  },
+  {
+    year: '1961',
+    thread: 'trial',
+    title: 'Minsky names the credit-assignment problem',
+    summary:
+      'How should credit for success be distributed among the many decisions that produced it?',
+  },
+  {
+    year: '1963',
+    thread: 'trial',
+    title: 'MENACE and STeLLA',
+    summary:
+      'Michie’s matchbox engine learns tic-tac-toe with coloured beads. Andreae’s STeLLA learns by trial and error with an internal model of the world.',
+  },
+  {
+    year: '1965',
+    thread: 'trial',
+    title: '“Reinforcement learning” enters engineering',
+    summary:
+      'Waltz and Fu—followed by Mendel, Fu, and others—use the terms for engineering applications of trial-and-error learning.',
+  },
+  {
+    year: '1968',
+    thread: 'trial',
+    title: 'BOXES balances a pole',
+    summary:
+      'Michie and Chambers build a controller that learns from a failure signal alone—an early RL task under incomplete knowledge.',
+  },
+  {
+    year: '1972',
+    thread: 'trial',
+    title: 'Klopf revives the hedonic thread',
+    summary:
+      'Klopf argues that the drive to get a result from the environment was being lost as research turned toward supervised learning.',
+  },
+  {
+    year: '1973',
+    thread: 'trial',
+    title: 'Learning with a critic',
+    summary:
+      'Widrow, Gupta, and Maitra modify LMS to learn from success and failure instead of examples. Learning automata and the k-armed bandit join the thread.',
+  },
+  {
+    year: '1975',
+    thread: 'trial',
+    title: 'Holland’s adaptive systems',
+    summary:
+      'Selection-based classifier systems lead to a bucket-brigade credit-assignment algorithm with a family resemblance to temporal difference.',
+  },
+  {
+    year: '1977',
+    thread: 'td',
+    title: 'Witten publishes the first TD rule',
+    summary:
+      'What we now call tabular TD(0) appears inside an adaptive controller for Markov decision processes.',
+    featured: true,
+  },
+  {
+    year: '1978',
+    thread: 'td',
+    title: 'Learning from successive predictions',
+    summary:
+      'Sutton develops learning rules driven by changes between temporally successive predictions, with links back to animal learning.',
+  },
+  {
+    year: '1981',
+    thread: 'td',
+    title: 'A TD model of classical conditioning',
+    summary:
+      'Sutton and Barto build a psychological model of classical conditioning on temporal-difference learning.',
+  },
+  {
+    year: '1983',
+    thread: 'td',
+    title: 'The actor–critic architecture',
+    summary:
+      'Barto, Sutton, and Anderson combine temporal-difference learning with trial and error, then return to the pole-balancing problem.',
+    featured: true,
+  },
+  {
+    year: '1987',
+    thread: 'control',
+    title: 'Werbos argues for interrelating DP and learning',
+    summary:
+      'An explicit case for joining dynamic programming with learning methods—and for connecting both to neural and cognitive mechanisms.',
+  },
+  {
+    year: '1988',
+    thread: 'td',
+    title: 'TD(λ) separates prediction from control',
+    summary:
+      'Sutton treats temporal-difference learning as a general prediction method, introduces TD(λ), and proves convergence properties.',
+    featured: true,
+  },
+  {
+    year: '1989',
+    thread: 'merge',
+    title: 'Q-learning unites the threads',
+    summary:
+      'Watkins integrates trial-and-error learning, optimal control, and temporal difference inside the Markov decision process formalism.',
+    featured: true,
+  },
+  {
+    year: '1992',
+    thread: 'merge',
+    title: 'TD-Gammon',
+    summary:
+      'Tesauro combines temporal-difference learning with a neural network for backgammon’s enormous state space, eventually reaching elite human play.',
+    featured: true,
+  },
+  {
+    year: '1994–97',
+    thread: 'merge',
+    title: 'Dopamine looks like a TD signal',
+    summary:
+      'Researchers find a striking similarity between temporal-difference errors and dopamine-neuron activity, opening a new thread in neuroscience.',
+    featured: true,
+  },
+  {
+    year: '1996',
+    thread: 'control',
+    title: 'Neurodynamic programming',
+    summary:
+      'Bertsekas and Tsitsiklis develop the relationship between dynamic programming and artificial neural networks that Watkins helped open.',
+  },
+];
+---
+
+<section class="history-timeline" data-history-timeline>
+  <div class="thread-controls" aria-label="Filter the timeline by intellectual thread">
+    <button type="button" data-thread-filter="all" aria-pressed="true">
+      <span aria-hidden="true">•••</span> All threads
+    </button>
+    {
+      Object.entries(threads).map(([id, thread]) => (
+        <button type="button" data-thread-filter={id} aria-pressed="false">
+          <span aria-hidden="true">{thread.glyph}</span> {thread.label}
+        </button>
+      ))
+    }
+  </div>
+
+  <p class="filter-status" data-filter-status aria-live="polite">
+    Showing all {events.length} moments
+  </p>
+
+  <ol class="event-list">
+    {
+      events.map((event) => (
+        <li
+          class:list={[
+            'event',
+            `event--${event.thread}`,
+            { 'event--featured': event.featured },
+          ]}
+          data-history-event
+          data-thread={event.thread}
+        >
+          <time>{event.year}</time>
+          <span class="event-marker" aria-hidden="true">{threads[event.thread].glyph}</span>
+          <article>
+            <div class="event-meta">
+              <span>{threads[event.thread].label}</span>
+              {event.featured && <span class="turning-point">Turning point</span>}
+            </div>
+            <h3>{event.title}</h3>
+            <p>{event.summary}</p>
+          </article>
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<script>
+  function initialiseHistoryTimelines() {
+    document.querySelectorAll<HTMLElement>('[data-history-timeline]').forEach((timeline) => {
+      if (timeline.dataset.initialised === 'true') return;
+      timeline.dataset.initialised = 'true';
+
+      const buttons = Array.from(
+        timeline.querySelectorAll<HTMLButtonElement>('[data-thread-filter]'),
+      );
+      const events = Array.from(
+        timeline.querySelectorAll<HTMLElement>('[data-history-event]'),
+      );
+      const status = timeline.querySelector<HTMLElement>('[data-filter-status]');
+
+      buttons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const selected = button.dataset.threadFilter ?? 'all';
+
+          buttons.forEach((candidate) => {
+            candidate.setAttribute(
+              'aria-pressed',
+              String(candidate.dataset.threadFilter === selected),
+            );
+          });
+
+          let visible = 0;
+          events.forEach((event) => {
+            const show = selected === 'all' || event.dataset.thread === selected;
+            event.hidden = !show;
+            if (show) visible += 1;
+          });
+
+          if (!status) return;
+          const label = button.textContent?.trim().replace(/^\S+\s*/, '') || 'selected thread';
+          status.textContent =
+            selected === 'all'
+              ? `Showing all ${visible} moments`
+              : `Showing ${visible} moments from ${label}`;
+        });
+      });
+    });
+  }
+
+  initialiseHistoryTimelines();
+  document.addEventListener('astro:page-load', initialiseHistoryTimelines);
+</script>
+
+<style>
+  .history-timeline {
+    --trial: #2f9d63;
+    --control: #8068d8;
+    --td: #c58a00;
+    --merge: #59810d;
+    margin: 2rem 0 2.5rem;
+  }
+
+  .thread-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    padding: 0.85rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 0.75rem;
+    background: var(--sl-color-gray-7);
+  }
+
+  .thread-controls button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-radius: 999px;
+    padding: 0.42rem 0.72rem;
+    background: var(--sl-color-bg);
+    color: var(--sl-color-text);
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 650;
+    line-height: 1.2;
+    cursor: pointer;
+  }
+
+  .thread-controls button:hover {
+    border-color: var(--sl-color-accent-high);
+  }
+
+  .thread-controls button:focus-visible {
+    outline: 2px solid var(--sl-color-accent-high);
+    outline-offset: 2px;
+  }
+
+  .thread-controls button[aria-pressed='true'] {
+    border-color: var(--sl-color-accent-high);
+    background: var(--sl-color-accent-low);
+    color: var(--sl-color-white);
+  }
+
+  .thread-controls button[data-thread-filter='trial'] span {
+    color: var(--trial);
+  }
+
+  .thread-controls button[data-thread-filter='control'] span {
+    color: var(--control);
+  }
+
+  .thread-controls button[data-thread-filter='td'] span {
+    color: var(--td);
+  }
+
+  .thread-controls button[data-thread-filter='merge'] span {
+    color: var(--merge);
+  }
+
+  .filter-status {
+    margin: 0.6rem 0 1.25rem;
+    color: var(--sl-color-gray-2);
+    font-size: 0.8rem;
+    text-align: right;
+  }
+
+  .event-list {
+    position: relative;
+    display: grid;
+    gap: 0.9rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .event-list::before {
+    content: '';
+    position: absolute;
+    top: 0.75rem;
+    bottom: 0.75rem;
+    left: 5.31rem;
+    width: 2px;
+    background: var(--sl-color-gray-5);
+  }
+
+  .event {
+    --event-color: var(--sl-color-accent);
+    display: grid;
+    grid-template-columns: 4.45rem 1.4rem minmax(0, 1fr);
+    gap: 0.25rem;
+    align-items: start;
+    margin: 0;
+  }
+
+  .event[hidden] {
+    display: none;
+  }
+
+  .event--trial {
+    --event-color: var(--trial);
+  }
+
+  .event--control {
+    --event-color: var(--control);
+  }
+
+  .event--td {
+    --event-color: var(--td);
+  }
+
+  .event--merge {
+    --event-color: var(--merge);
+  }
+
+  .event time {
+    padding-top: 0.78rem;
+    color: var(--sl-color-gray-2);
+    font-variant-numeric: tabular-nums;
+    font-size: 0.78rem;
+    font-weight: 700;
+    text-align: right;
+  }
+
+  .event-marker {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    width: 1.4rem;
+    height: 1.4rem;
+    margin-top: 0.65rem;
+    place-items: center;
+    border: 2px solid var(--event-color);
+    border-radius: 50%;
+    background: var(--sl-color-bg);
+    color: var(--event-color);
+    font-size: 0.7rem;
+    font-weight: 800;
+  }
+
+  .event article {
+    min-width: 0;
+    padding: 0.85rem 1rem 0.9rem;
+    border: 1px solid var(--sl-color-gray-5);
+    border-left: 3px solid var(--event-color);
+    border-radius: 0.55rem;
+    background: var(--sl-color-gray-7);
+  }
+
+  .event--featured article {
+    background:
+      linear-gradient(
+        115deg,
+        color-mix(in srgb, var(--event-color) 12%, var(--sl-color-bg)),
+        var(--sl-color-gray-7) 52%
+      );
+    box-shadow: 0 0.35rem 1rem rgb(0 0 0 / 8%);
+  }
+
+  .event-meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.22rem;
+    color: var(--event-color);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.06em;
+    line-height: 1.25;
+    text-transform: uppercase;
+  }
+
+  .turning-point {
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 0.08rem 0.38rem;
+    opacity: 0.86;
+  }
+
+  .event h3 {
+    margin: 0;
+    color: var(--sl-color-white);
+    font-size: 1rem;
+    line-height: 1.35;
+  }
+
+  .event p {
+    margin: 0.38rem 0 0;
+    color: var(--sl-color-gray-2);
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+
+  @media (max-width: 34rem) {
+    .thread-controls {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .thread-controls button {
+      justify-content: flex-start;
+    }
+
+    .event-list::before {
+      left: 0.69rem;
+    }
+
+    .event {
+      grid-template-columns: 1.4rem minmax(0, 1fr);
+      gap: 0.5rem;
+    }
+
+    .event time {
+      grid-column: 2;
+      grid-row: 1;
+      padding: 0;
+      text-align: left;
+    }
+
+    .event-marker {
+      grid-column: 1;
+      grid-row: 1 / span 2;
+      margin-top: 0;
+    }
+
+    .event article {
+      grid-column: 2;
+      grid-row: 2;
+    }
+  }
+
+  @media (max-width: 24rem) {
+    .thread-controls {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .event article {
+      transition: transform 140ms ease, border-color 140ms ease;
+    }
+
+    .event article:hover {
+      transform: translateY(-2px);
+      border-color: var(--event-color);
+    }
+  }
+</style>
