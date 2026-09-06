@@ -235,10 +235,11 @@ every better method does.
 
 ## Where next
 
-That closes the bandit problem. The next chapter puts back what this one
-deleted — state, transitions, and consequences that arrive later than the action
-that caused them:
-[Markov decision processes](/Reinforcement-Learning/chapters/03-markov-decision-processes/).
+Optimism spent on a fixed schedule is the crude version of the idea. The next
+page makes the optimism proportional to the uncertainty that actually remains,
+arm by arm:
+[upper-confidence-bound action
+selection](/Reinforcement-Learning/chapters/02-multi-armed-bandits/upper-confidence-bound/).
 
 ## References
 

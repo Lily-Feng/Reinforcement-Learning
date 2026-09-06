@@ -63,7 +63,8 @@ Reinforcement-Learning/
 │   │       ├── 02-multi-armed-bandits/
 │   │       │   ├── index.md
 │   │       │   ├── action-value-methods.md
-│   │       │   └── epsilon-greedy.mdx
+│   │       │   ├── epsilon-greedy.mdx
+│   │       │   └── upper-confidence-bound.md
 │   │       ├── 03-markov-decision-processes/
 │   │       │   └── index.md
 │   │       └── ...
@@ -76,6 +77,8 @@ Reinforcement-Learning/
 │   │       └── epsilon-greedy.astro
 │   └── styles/
 │       └── custom.css
+├── experiments/
+│   └── ucb-testbed.mjs      # 10-armed testbed numbers quoted in chapter 2
 ├── .nvmrc
 ├── astro.config.mjs
 ├── package.json
