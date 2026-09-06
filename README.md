@@ -64,7 +64,8 @@ Reinforcement-Learning/
 │   │       │   ├── index.md
 │   │       │   ├── action-value-methods.md
 │   │       │   ├── epsilon-greedy.mdx
-│   │       │   └── upper-confidence-bound.md
+│   │       │   ├── upper-confidence-bound.md
+│   │       │   └── gradient-bandit.md
 │   │       ├── 03-markov-decision-processes/
 │   │       │   └── index.md
 │   │       └── ...
@@ -78,7 +79,8 @@ Reinforcement-Learning/
 │   └── styles/
 │       └── custom.css
 ├── experiments/
-│   └── ucb-testbed.mjs      # 10-armed testbed numbers quoted in chapter 2
+│   ├── ucb-testbed.mjs       # 10-armed testbed numbers quoted in chapter 2
+│   └── gradient-bandit.mjs  # baseline vs no baseline, shifted and standard
 ├── .nvmrc
 ├── astro.config.mjs
 ├── package.json

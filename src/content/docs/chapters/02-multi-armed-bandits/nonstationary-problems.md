@@ -1,5 +1,5 @@
 ---
-title: Tracking a nonstationary problem
+title: nonstationary problem
 description: "When the true action values drift, the sample average is the wrong estimator. Constant step sizes, exponential recency weighting, and what convergence costs."
 sidebar:
   order: 4

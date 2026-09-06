@@ -1,5 +1,5 @@
 ---
-title: Upper-confidence-bound action selection
+title: Upper-confidence-bound
 description: "Explore the arm you are least sure about, not one drawn at random — and the mysterious spike at step 11 that falls out of doing so."
 sidebar:
   order: 6
@@ -398,10 +398,11 @@ untouched.
 
 ## Where next
 
-That is as far as the bandit problem goes here. The next chapter puts back
-everything this one deleted — state, transitions, and consequences that arrive
-later than the action that caused them:
-[Markov decision processes](/Reinforcement-Learning/chapters/03-markov-decision-processes/).
+Every method so far — including this one — estimates $q_*(a)$ and then argues
+about how to act on the estimate. The last page of the chapter drops the estimate
+entirely and learns a preference instead:
+[gradient bandit
+algorithms](/Reinforcement-Learning/chapters/02-multi-armed-bandits/gradient-bandit/).
 
 ## References
 

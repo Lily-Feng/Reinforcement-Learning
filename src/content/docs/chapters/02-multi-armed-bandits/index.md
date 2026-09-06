@@ -123,6 +123,7 @@ its exploration can get sublinear regret.
 - [Tracking a nonstationary problem](/Reinforcement-Learning/chapters/02-multi-armed-bandits/nonstationary-problems/) — what changes when $q_*(a)$ drifts, and why the step size is really a memory length.
 - [Optimistic initial values](/Reinforcement-Learning/chapters/02-multi-armed-bandits/optimistic-initial-values/) — how a starting value alone can make a greedy agent explore, and why only once.
 - [Upper-confidence-bound action selection](/Reinforcement-Learning/chapters/02-multi-armed-bandits/upper-confidence-bound/) — explore the arm you are least sure about, and why the learning curve spikes at step 11.
+- [Gradient bandit algorithms](/Reinforcement-Learning/chapters/02-multi-armed-bandits/gradient-bandit/) — learn preferences rather than values, derived as stochastic gradient ascent, and what the baseline is really for.
 
 ## Personal takeaways
 
