@@ -4,6 +4,7 @@ import starlight from '@astrojs/starlight';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import starlightLinksValidator from 'starlight-links-validator';
+import remarkMermaid from './src/plugins/remark-mermaid.mjs';
 
 /**
  * Chapters, easy to complex. This array IS the reading order.
@@ -36,7 +37,7 @@ export default defineConfig({
   // Starlight renders no LaTeX on its own. Configured here rather than
   // discovered halfway through the first chapter with equations in it.
   markdown: {
-    remarkPlugins: [remarkMath],
+    remarkPlugins: [remarkMath, remarkMermaid],
     rehypePlugins: [rehypeKatex],
   },
 
@@ -55,6 +56,7 @@ export default defineConfig({
       // Fails the build on a broken internal link. `astro check` does not do
       // this — it only covers TypeScript and component diagnostics.
       plugins: [starlightLinksValidator()],
+      components: { Head: './src/components/MermaidHead.astro' },
       customCss: ['./src/styles/custom.css', 'katex/dist/katex.min.css'],
       sidebar: [
         { label: 'Start here', link: '/getting-started/' },
