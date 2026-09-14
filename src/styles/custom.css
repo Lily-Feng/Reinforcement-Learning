@@ -13,6 +13,27 @@
   padding-bottom: 0.25rem;
 }
 
+/* Mermaid source stays readable until its SVG is ready. */
+.sl-markdown-content pre.mermaid {
+  overflow-x: auto;
+  padding: 1rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: 0.5rem;
+  background: var(--sl-color-gray-7);
+}
+
+.sl-markdown-content pre.mermaid[data-processed] {
+  white-space: normal;
+  text-align: center;
+}
+
+.sl-markdown-content pre.mermaid svg {
+  display: block;
+  margin-inline: auto;
+  max-width: 100%;
+  height: auto;
+}
+
 /* Algorithm pseudocode blocks. */
 .pseudocode {
   border: 1px solid var(--sl-color-gray-5);

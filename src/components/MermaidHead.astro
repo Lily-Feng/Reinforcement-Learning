@@ -1,0 +1,50 @@
+---
+import DefaultHead from '@astrojs/starlight/components/Head.astro';
+---
+
+<DefaultHead />
+
+<script>
+  // Pages without diagrams do not download Mermaid.
+  const sources = new WeakMap<HTMLElement, string>();
+  let rendering = Promise.resolve();
+
+  function renderDiagrams() {
+    rendering = rendering.then(async () => {
+      const nodes = Array.from(document.querySelectorAll<HTMLElement>('pre.mermaid'));
+      if (!nodes.length) return;
+
+      const { default: mermaid } = await import('mermaid');
+      await document.fonts.ready;
+      mermaid.initialize({
+        startOnLoad: false,
+        securityLevel: 'strict',
+        theme: document.documentElement.dataset.theme === 'dark' ? 'dark' : 'default',
+        fontFamily: 'Arial, sans-serif',
+        flowchart: { htmlLabels: false },
+      });
+
+      for (const node of nodes) {
+        if (!sources.has(node)) sources.set(node, node.textContent ?? '');
+        node.textContent = sources.get(node)!;
+        delete node.dataset.processed;
+      }
+      await mermaid.run({ nodes });
+    }).catch((error) => {
+      // Keep the authored diagram readable if rendering fails.
+      for (const node of document.querySelectorAll<HTMLElement>('pre.mermaid')) {
+        const source = sources.get(node);
+        if (source !== undefined) node.textContent = source;
+        delete node.dataset.processed;
+      }
+      console.error('Unable to render Mermaid diagrams:', error);
+    });
+  }
+
+  renderDiagrams();
+  document.addEventListener('astro:page-load', renderDiagrams);
+  new MutationObserver(renderDiagrams).observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['data-theme'],
+  });
+</script>
