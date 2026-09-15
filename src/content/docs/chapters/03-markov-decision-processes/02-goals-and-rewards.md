@@ -9,7 +9,7 @@ A **reward** is a number supplied by the environment after an action. It communi
 
 ## Reward describes what success means
 
-In the gridworld from [3.1](/Reinforcement-Learning/chapters/03-markov-decision-processes/01-agent-environment-interface/), entering Goal gives +5 and every other move gives −1. These rules favor reaching Goal with fewer moves.
+In the gridworld from [3.1](/Reinforcement-Learning/chapters/03-markov-decision-processes/01-agent-env-interface/), entering Goal gives +5 and every other move gives −1. These rules favor reaching Goal with fewer moves.
 
 The agent chooses its actions. It does not get to change the reward rules to make its score larger. A **policy** is the behavior it learns to do well under those rules.
 
@@ -65,4 +65,4 @@ Sutton, R. S. & Barto, A. G. *Reinforcement Learning: An Introduction*, 2nd ed.,
 
 ---
 
-[Previous: 3.1 The Agent–Environment Interface](/Reinforcement-Learning/chapters/03-markov-decision-processes/01-agent-environment-interface/) · [Next: 3.3 Returns and Episodes](/Reinforcement-Learning/chapters/03-markov-decision-processes/03-returns-and-episodes/)
+[Previous: 3.1 The Agent–Environment Interface](/Reinforcement-Learning/chapters/03-markov-decision-processes/01-agent-env-interface/) · [Next: 3.3 Returns and Episodes](/Reinforcement-Learning/chapters/03-markov-decision-processes/03-returns-and-episodes/)

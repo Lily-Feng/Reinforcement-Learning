@@ -20,7 +20,7 @@ The seven sections follow this order. They share a small gridworld introduced in
 
 | Section | What you will learn |
 | --- | --- |
-| [3.1 The Agent–Environment Interface](/Reinforcement-Learning/chapters/03-markov-decision-processes/01-agent-environment-interface/) | States, actions, transition dynamics, and the Markov property. |
+| [3.1 The Agent–Environment Interface](/Reinforcement-Learning/chapters/03-markov-decision-processes/01-agent-env-interface/) | States, actions, transition dynamics, and the Markov property. |
 | [3.2 Goals and Rewards](/Reinforcement-Learning/chapters/03-markov-decision-processes/02-goals-and-rewards/) | Express the task through rewards while distinguishing immediate feedback from long-term success. |
 | [3.3 Returns and Episodes](/Reinforcement-Learning/chapters/03-markov-decision-processes/03-returns-and-episodes/) | Calculate finite and discounted returns, including backward calculations and infinite sequences. |
 | [3.4 Unified Notation for Episodic and Continuing Tasks](/Reinforcement-Learning/chapters/03-markov-decision-processes/04-unified-notation/) | Use an absorbing terminal state and zero future rewards to write one return formula for both task types. |
