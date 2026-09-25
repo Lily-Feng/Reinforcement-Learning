@@ -1,0 +1,155 @@
+---
+title: Dynamic programming
+description: "Explore policy evaluation, policy improvement, and value iteration through an interactive GridWorld and its Python implementation."
+sidebar:
+  order: 1
+---
+
+import DemoFrame from '../../../../components/DemoFrame.astro';
+
+## Learning objective
+
+Explain how a known transition model turns the Bellman equations into an
+algorithm. Step through value updates, distinguish evaluating a policy from
+improving it, and connect the equations to the `cs394r-pa2` Python package.
+
+## Intuition
+
+If we know what each action does, we can look ahead without collecting an
+episode. An action's value is its immediate reward plus the discounted value
+of the next state. Repeatedly applying that calculation spreads information
+from terminal states through the rest of the world.
+
+**Policy evaluation** asks how well a fixed policy behaves. **Policy
+improvement** chooses better actions using those values. **Value iteration**
+takes the best action value at every backup.
+
+## Algorithm and equations
+
+For a known model, first compute a one-step lookahead:
+
+$$
+Q_V(s,a) = \sum_{s',r} p(s',r\mid s,a)
+\left[r + \gamma\,\mathbf{1}_{\text{not terminal}} V(s')\right].
+$$
+
+To evaluate a policy, average over its action probabilities:
+
+$$
+V(s) \leftarrow \sum_a \pi(a\mid s) Q_V(s,a).
+$$
+
+For value iteration, take the best action value:
+
+$$
+V(s) \leftarrow \max_a Q_V(s,a).
+$$
+
+A greedy policy chooses $\pi(s)=\arg\max_a Q_V(s,a)$. Policy iteration
+alternates evaluation to tolerance with greedy improvement, stopping when the
+policy is unchanged.
+
+The Python implementation updates `V[state]` **in place**, so a later state
+can read values updated earlier in the same sweep. After a full sweep, it
+stops when the largest absolute change $\Delta$ is less than $\theta$.
+This tolerance is a stopping rule, not a direct bound on value error.
+
+## Interactive demo
+
+The lab runs entirely in the browser. Start with the original deterministic
+2 × 2 environment, or explore a 4 × 4 extension with the same transition
+rules. The **Package & Python** view contains source snapshots from the
+implementation; Python itself is not executed in the browser.
+
+<DemoFrame
+  chapter="dynamic-programming"
+  demo="gridworld"
+  title="Dynamic programming learning lab: value and policy updates"
+  source="src/demos/dynamic-programming/core.ts"
+  height="1150px"
+/>
+
+Use **Step state** for one Bellman backup, **Full sweep** for the remaining
+states in a sweep, or **Run** for playback. **Undo** restores the previous
+control action. Selecting a cell exposes the last executed backup for that
+state if it is still the latest update; otherwise it previews a backup from
+the current value table. It never changes the values by itself.
+
+## Worked example
+
+In the original grid, state 3 is terminal. Every move from a nonterminal state
+costs −1, including the move into the goal. Moving into a wall leaves the
+agent in the same state and still costs −1.
+
+With $\gamma=1$, an optimal policy needs two moves from state 0 and one move
+from states 1 and 2:
+
+$$V_* = [-2, -1, -1, 0].$$
+
+The uniform random policy wastes moves at walls and away from the goal. Its
+values are:
+
+$$V_\pi = [-8, -6, -6, 0].$$
+
+This difference comes from action selection, not a different reward model.
+
+## What to observe
+
+- Start at zero and step through the first sweep. Some actions initially tie
+  because their successor values have not yet become informative.
+- With value iteration and $\gamma=1$, state 0 ends at −2. First-maximum
+  tie-breaking selects right before down because the action order is
+  **left, up, right, down**.
+- Switch to policy evaluation. All four actions keep weight 0.25, even when
+  their action values differ.
+- Run policy iteration. Evaluation holds the policy fixed; improvement
+  changes the arrows. A policy improvement can make the next sweep's $\Delta$
+  rise again.
+- Set $\gamma=0$. Every nonterminal state becomes −1: only the immediate
+  reward matters, so every action ties.
+
+## Package and logical structure
+
+| File | Responsibility |
+| --- | --- |
+| `assignments/dp.py` | `value_prediction` and `value_iteration`; Bellman backups and stopping |
+| `assignments/policy_deterministic_greedy.py` | Deterministic action selection using `np.argmax` |
+| `interfaces/policy.py` | Policy interface: `action` and `action_prob` |
+| `interfaces/random_policy.py` | Fixed, optionally uniform action distribution |
+| `lib/envs/grid_world_2x2.py` | Transition model, step rewards, and terminal state |
+| `lib/envs/grid_world.py` | Grid coordinates and environment behavior |
+| `lib/envs/wrapped_gridworld.py` | Action numbering, wrappers, and Python visualization |
+| `run.py` | Entry point connecting algorithms and environments |
+| `tests/dp.py` | Expected values and policy checks |
+
+The browser engine mirrors the supplied value-prediction and value-iteration
+loops, including terminal handling and in-place state ordering.
+`value_prediction` recomputes Q after convergence; `value_iteration` returns
+the Q table from its final sweep. The lab preserves that distinction.
+The policy-iteration controller and 4 × 4 grid are **learning extensions**,
+not functions present in the supplied `dp.py`.
+
+## Experiments to try
+
+1. Predict the first two backups by hand, then check the microscope.
+2. Compare the two algorithms at discounts 0, 0.5, and 1.
+3. Use the 4 × 4 world to see values propagate over more sweeps.
+4. Change the convergence threshold during policy evaluation and compare
+   the number of sweeps and the precision of the final values.
+
+## Personal takeaways
+
+The useful distinction is between **estimating return** and **choosing an
+action**. Evaluation does the first; improvement does the second. Value
+iteration joins them through a maximum. All of these methods rely on a
+known model, which is the assumption later model-free chapters remove.
+
+## Embed in another website
+
+Open the standalone demo and select **Embed** to copy an iframe snippet. The
+URL includes the site's deployment base path. The compact `?embed=1` layout
+keeps the same controls and explanations. Adjust the iframe height for your
+page; the embedded content can also scroll on narrow screens.
+
+The demo needs only static hosting after `npm run build`; it does not need a
+Python server, API, account, or external script CDN.

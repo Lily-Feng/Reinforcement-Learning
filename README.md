@@ -366,3 +366,26 @@ retrofit across twenty pages.
 - Math rendering and internal-link validation working.
 - The Multi-Armed Bandits chapter with an epsilon-greedy explanation page.
 - The epsilon-greedy simulator, refactored, seeded, CDN-free, and embedded.
+
+## Dynamic programming lab
+
+The standalone route is `demos/dynamic-programming/gridworld/` under the
+configured site base. It is embedded in the Dynamic Programming chapter.
+Use its **Embed** button on the hosted site to copy a public iframe snippet;
+`?embed=1` enables the compact layout. No backend or Python runtime is needed.
+
+- `src/demos/dynamic-programming/core.ts`: deterministic, in-place DP engine.
+- `src/demos/dynamic-programming/render.ts`: playback, state inspection,
+  source explorer, and embed controls.
+- `src/demos/dynamic-programming/python/`: verbatim snapshots of the supplied
+  `cs394r-pa2` Python files, named with `/` replaced by `__`. Update these
+  snapshots explicitly when the original implementation changes. They are
+  displayed and downloadable, not executed in the browser.
+- `src/pages/demos/dynamic-programming/gridworld.astro`: standalone HTML page.
+
+The 2 × 2 model, action order, terminal handling, and value/policy-evaluation
+updates follow the supplied Python. The 4 × 4 model and policy-iteration
+controller are labeled learning extensions. Tests cover analytic values,
+policy stability, terminal transitions, in-place ordering, and original
+Python parity fixtures. Run them with
+`node --experimental-strip-types --test tests/dynamic-programming.test.mjs`.

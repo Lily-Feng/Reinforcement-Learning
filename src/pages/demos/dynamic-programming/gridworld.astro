@@ -1,0 +1,63 @@
+---
+import { chapterUrl } from '../../../lib/url';
+import '../../../demos/dynamic-programming/style.css';
+const chapter = chapterUrl('04-dynamic-programming');
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Step through policy evaluation, value iteration, and policy improvement. An interactive GridWorld lab based on a Python implementation." />
+    <title>Dynamic programming · RL Lab</title>
+  </head>
+  <body>
+    <div class="lab">
+      <header class="masthead"><a href={chapter} class="brand">RL<span> / </span>LEARNING LAB</a><span class="client-badge"><i></i> Runs in your browser</span><button id="embed-open" class="quiet">&lt;/&gt; Embed</button></header>
+      <section class="intro"><div><p class="eyebrow">04 / DYNAMIC PROGRAMMING</p><h1>Small world. <em>Big ideas.</em></h1><p>Watch values propagate. See a policy improve.<br />Connect every update to the Python that makes it happen.</p></div><div class="intro-note"><span>THE QUESTION</span><p>With a known model,<br />how do we find the best action?</p><a href={chapter}>Read the chapter ↗</a></div></section>
+      <nav class="views" aria-label="Learning views"><button data-view="simulation" aria-pressed="true">01 <span>Interactive lab</span></button><button data-view="logic" aria-pressed="false">02 <span>How it works</span></button><button data-view="source" aria-pressed="false">03 <span>Package & Python</span></button></nav>
+      <main>
+        <section id="simulation" class="view">
+          <div class="workspace">
+            <aside class="panel controls"><div class="section-heading"><span class="eyebrow">EXPERIMENT</span><span class="tiny">01</span></div>
+              <label for="algorithm">Algorithm</label><select id="algorithm"><option value="value">Value iteration</option><option value="evaluation">Policy evaluation</option><option value="policy">Policy iteration</option></select>
+              <p id="algorithm-help" class="hint"></p>
+              <label for="world">Environment</label><select id="world"><option value="2">2 × 2 · Python original</option><option value="4">4 × 4 · Learning extension</option></select>
+              <label for="gamma">Discount <span>γ = <output id="gamma-value">1.00</output></span></label><input id="gamma" type="range" min="0" max="1" step="0.05" value="1" /><div class="range-labels"><span>Immediate reward</span><span>Long-term</span></div>
+              <label for="theta">Convergence threshold · θ</label><select id="theta"><option value="0.01">0.01</option><option value="0.0001" selected>0.0001</option><option value="0.000001">0.000001</option></select>
+              <div class="rules"><strong>The rules of this world</strong><p>Each move costs −1, including entering the goal. A wall keeps you in place. The goal is terminal: future value is 0.</p></div>
+              <p class="hint">Changing a parameter starts a new experiment. Updates run in place, in state order.</p>
+            </aside>
+            <section class="panel stage"><div class="section-heading"><h2>Value landscape</h2><span class="pill" id="phase">Value update</span></div><p class="hint" id="grid-description">Select a state to inspect its Bellman backup.</p>
+              <div id="grid" class="grid" aria-label="GridWorld states"></div>
+              <div class="legend"><span><i class="selected-dot"></i> Inspected state</span><span>★ Terminal</span><span id="arrow-label">Arrows: greedy from stored Q</span></div>
+              <div class="stats"><div><span>SWEEPS</span><strong id="sweeps">0</strong></div><div><span>LAST SWEEP Δ</span><strong id="delta">—</strong></div><div><span>POLICY UPDATES</span><strong id="improvements">0</strong></div></div>
+              <div class="playback"><button id="play" class="primary">▶ Run</button><button id="step">Step state →</button><button id="sweep">Full sweep</button><button id="undo" aria-label="Undo last action">↶</button><button id="reset">Reset</button></div>
+              <p id="status" class="status" role="status">Ready. Start with one state update.</p>
+            </section>
+            <aside class="panel inspector"><div class="section-heading"><span class="eyebrow">BELLMAN MICROSCOPE</span><span id="state-label" class="pill">s₀</span></div><h2 id="backup-title">Next backup preview</h2><p id="backup-caption" class="hint"></p>
+              <div id="formula" class="formula"></div>
+              <div class="table-scroll"><table><caption>One-step action values</caption><thead><tr><th>Action</th><th>Next</th><th>Q(s,a)</th><th>Weight</th></tr></thead><tbody id="q-table"></tbody></table></div>
+              <p class="hint">Q = r + γ × future. Each transition has probability 1. Terminal transitions use future = 0.</p>
+              <div class="calculation" id="calculation"></div><p class="hint" id="tie-note"></p>
+              <details><summary>Inspect env.P[state][action]</summary><pre id="transition-code"></pre></details>
+            </aside>
+          </div>
+          <div class="below"><section class="panel convergence"><div class="section-heading"><h2>Getting closer</h2><span class="tiny">Δ by completed sweep · log₁₀(1 + Δ)</span></div><svg id="chart" viewBox="0 0 600 110" role="img" aria-label="Convergence chart: maximum value change per sweep"></svg><p id="chart-description" class="hint">Run a sweep to see how much the values change.</p></section><section class="panel prompt"><p class="eyebrow">TRY THIS</p><h2>Evaluate, then optimize.</h2><p>In the 2 × 2 world, run policy evaluation with γ = 1. State 0 approaches −8. Switch to value iteration: it reaches −2. Why does choosing an action beat averaging over actions?</p></section></div>
+        </section>
+        <section id="logic" class="view" hidden>
+          <div class="panel lesson"><p class="eyebrow">THE LOGICAL STRUCTURE</p><h2>One backup. Three ways to use it.</h2><p>Dynamic programming uses the transition model to look ahead at every possible outcome. No episodes are sampled in this lab.</p><div class="flow"><div><b>01 · MODEL</b><code>env.unwrapped.P</code><p>For every (state, action), read probability, next state, reward, and done.</p></div><span>→</span><div><b>02 · LOOK AHEAD</b><code>Q(s,a) = Σ p(r + γV(s′))</code><p>Use zero future value when done is true. Otherwise read the current V.</p></div><span>→</span><div><b>03 · BACK UP</b><code>V(s) ← average or max</code><p>Average with π to evaluate. Take the maximum to optimize.</p></div></div>
+            <div class="lesson-columns"><article><span class="pill">In your Python</span><h3>Policy evaluation</h3><p>Keep π fixed. Replace each V(s) with Σ π(a|s)Q(s,a), then repeat until a complete sweep has Δ &lt; θ. Finally recompute all Q from the converged V.</p><code>value_prediction(env, pi, …)</code></article><article><span class="pill">In your Python</span><h3>Value iteration</h3><p>Replace each V(s) with max Q(s,a). Repeat until Δ &lt; θ, then return a deterministic greedy policy from the last sweep’s Q table.</p><code>value_iteration(env, …)</code></article><article><span class="pill">Learning extension</span><h3>Policy iteration</h3><p>Start with a uniform random policy. Evaluate it to tolerance, improve all states with argmax Q, and repeat. Stop when the policy no longer changes.</p><code>evaluate → improve → repeat</code></article></div>
+            <div class="callout"><h3>In-place really matters.</h3><p>Your code assigns <code>V[state] = new_v</code> immediately. Later states in the same sweep can read that new value. “Step state” exposes this ordering; it is not a synchronous update using a frozen copy of V.</p></div>
+            <div class="lesson-columns"><article><h3>What does Δ tell us?</h3><p>Δ is the largest absolute change to V in one sweep. It is a stopping criterion, not a measurement of error against the true optimal value. The threshold applies only after every state has been updated.</p></article><article><h3>How are ties resolved?</h3><p><code>np.argmax</code> takes the first maximum. Action order is left (0), up (1), right (2), down (3). The browser follows that same order, including temporary ties early in learning.</p></article><article><h3>Value versus policy</h3><p>V estimates return; π chooses actions. Evaluation changes only V. Policy improvement changes π. Value iteration combines a greedy choice with each value backup; its displayed arrows preview the eventual greedy policy.</p></article></div>
+          </div>
+        </section>
+        <section id="source" class="view" hidden><div class="source-layout"><aside class="panel"><p class="eyebrow">CS394R-PA2 / PACKAGE MAP</p><h2>Follow the implementation</h2><p class="hint">Select a file to read a snapshot of the original Python project. Assignment hints and TODO comments are preserved verbatim.</p><div id="file-tree"></div><div class="rules"><strong>Browser architecture</strong><p><code>core.ts</code> implements pure DP updates. <code>render.ts</code> connects them to the HTML controls. Python is displayed as source, not executed.</p></div></aside><section class="panel code-panel"><div class="section-heading"><h2 id="file-name"></h2><button id="download-source">↓ Download .py</button></div><p id="file-description" class="hint"></p><pre class="python-source"><code id="python-code"></code></pre></section></div></section>
+      </main>
+      <footer><span>KNOWN MODEL → VALUE FUNCTION → BETTER DECISIONS</span><span>Based on your cs394r-pa2 implementation</span></footer>
+    </div>
+    <dialog id="embed-dialog"><div class="section-heading"><h2>Take the lab with you.</h2><button id="embed-close" aria-label="Close embed dialog">✕</button></div><p>Host the built site, then paste this HTML into any page that allows iframes. All computation stays in the visitor’s browser.</p><label for="embed-code">Embed HTML</label><textarea id="embed-code" rows="5" readonly></textarea><button id="copy-embed" class="primary">Copy embed code</button><p id="embed-feedback" role="status" class="hint"></p></dialog>
+    <noscript><p>This interactive lab needs JavaScript. The “How it works” and source views require the browser controls; read the linked chapter for a static explanation.</p></noscript>
+    <script>import '../../../demos/dynamic-programming/render';</script>
+  </body>
+</html>

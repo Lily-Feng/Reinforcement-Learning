@@ -12,6 +12,13 @@ interface Simulation {
 // Add future simulations here; the gallery layout expands automatically.
 const simulations: Simulation[] = [
   {
+    title: 'Dynamic programming',
+    description: 'Step through value updates, inspect Bellman backups, and connect policy improvement to Python.',
+    chapter: 'dynamic-programming',
+    demo: 'gridworld',
+    topic: 'Dynamic programming',
+  },
+  {
     title: 'Epsilon-greedy',
     description: 'Watch an agent balance exploration and exploitation across a five-armed bandit.',
     chapter: 'multi-armed-bandits',
@@ -46,6 +53,23 @@ const simulations: Simulation[] = [
             <circle cx="552" cy="62" r="96" fill="#d9ff62" opacity="0.08" />
             <circle cx="88" cy="322" r="118" fill="#67e8f9" opacity="0.07" />
 
+            {simulation.demo === 'gridworld' ? (
+              <g font-family="system-ui, sans-serif">
+                <text x="46" y="48" fill="#c6ef85" font-size="14">VALUE → POLICY</text>
+                {[0, 1, 2, 3].map((state) => (
+                  <g transform={`translate(${46 + state % 2 * 130} ${70 + Math.floor(state / 2) * 120})`}>
+                    <rect width="118" height="108" rx="10" fill={state === 3 ? '#263d30' : '#284344'} stroke="#55716a" />
+                    <text x="12" y="22" fill="#a4b5ba" font-size="12">s{state}</text>
+                    <text x="59" y="62" text-anchor="middle" fill="#edf3f1" font-size="28">{['−2', '−1', '−1', '★'][state]}</text>
+                    <text x="59" y="90" text-anchor="middle" fill="#c6ef85" font-size="21">{['→', '↓', '→', '0'][state]}</text>
+                  </g>
+                ))}
+                <text x="342" y="128" fill="#a4b5ba" font-size="13">BELLMAN BACKUP</text>
+                <text x="342" y="173" fill="#edf3f1" font-size="22">V(s) ← max Q(s,a)</text>
+                <text x="342" y="219" fill="#c6ef85" font-size="14">KNOWN MODEL</text>
+                <text x="342" y="245" fill="#a4b5ba" font-size="14">One state at a time.</text>
+              </g>
+            ) : (<g>
             <g transform="translate(54 50)">
               <text x="0" y="0" fill="#94a3b8" font-size="15" font-family="system-ui, sans-serif">
                 ESTIMATED REWARD
@@ -79,6 +103,7 @@ const simulations: Simulation[] = [
               <circle cx="72" cy="104" r="11" fill="#f8fafc" stroke="#67e8f9" stroke-width="4" />
               <text x="20" y="142" fill="#d9ff62" font-size="14" font-weight="700" font-family="system-ui, sans-serif">EXPLOIT BEST ARM</text>
             </g>
+            </g>)}
           </svg>
           <span class="play-mark">
             <svg viewBox="0 0 24 24" role="presentation">
