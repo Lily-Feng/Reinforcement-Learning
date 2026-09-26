@@ -1,0 +1,95 @@
+---
+import { chapterUrl } from '../../../lib/url';
+const backHref = chapterUrl('05-monte-carlo-methods');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Compare first-visit and every-visit Monte Carlo estimates using three complete example episodes." />
+    <title>Monte Carlo return explorer</title>
+  </head>
+  <body>
+    <main data-mc-explorer>
+      <header>
+        <p class="eyebrow">Learn from completed experience</p>
+        <h1>Monte Carlo return explorer</h1>
+        <p>Same episodes. Two ways to count visits.</p>
+        <a href={backHref} target="_top">← Back to the chapter</a>
+      </header>
+      <section class="panel" aria-labelledby="controls-heading">
+        <h2 id="controls-heading">1. Include a completed episode</h2>
+        <p>Replay three fixed examples. This illustrates averaging; it does not demonstrate convergence.</p>
+        <div class="controls">
+          <label for="gamma">Discount γ <output id="gamma-value" data-gamma-value for="gamma">1.00</output>
+            <input id="gamma" data-gamma type="range" min="0" max="1" step="0.05" value="1" aria-describedby="discount-hint" />
+          </label>
+          <button data-next type="button">Include episode 1</button>
+          <button data-reset type="button" disabled>Reset episodes</button>
+        </div>
+        <p id="discount-hint" class="muted">Changing γ recalculates every included episode. Reset keeps the selected discount.</p>
+        <p data-status role="status">No episodes included yet.</p>
+      </section>
+      <section class="panel" aria-labelledby="returns-heading">
+        <h2 id="returns-heading">2. Inspect the latest episode</h2>
+        <p class="path" data-path>Waiting for a completed episode.</p>
+        <div class="table-wrap" tabindex="0" role="region" aria-label="Latest episode returns, scroll horizontally on small screens">
+          <table>
+            <caption>Returns and visit selection for the latest included episode</caption>
+            <thead><tr><th scope="col">Time</th><th scope="col">State</th><th scope="col">Next reward</th><th scope="col">Return G</th><th scope="col">Included by</th></tr></thead>
+            <tbody data-visits><tr><td colspan="5">No visits included yet.</td></tr></tbody>
+          </table>
+        </div>
+        <p class="muted">A repeated state contributes another sample only to every-visit MC.</p>
+      </section>
+      <section class="panel" aria-labelledby="values-heading">
+        <h2 id="values-heading">3. Average across all included episodes</h2>
+        <div class="estimates" data-estimates><p>Values are unknown until a state contributes a return.</p></div>
+        <p class="muted">Values are rounded to three decimals. Each sample is one selected visit's return.</p>
+      </section>
+      <noscript>This explorer needs JavaScript. The chapter contains the same first two episodes as worked examples.</noscript>
+    </main>
+    <script>
+      import { initReturnExplorer } from '../../../demos/monte-carlo/render';
+      initReturnExplorer();
+    </script>
+    <style is:global>
+      :root { color-scheme: dark; font-family: ui-sans-serif, system-ui, sans-serif; color: #e2e8f0; background: #0f172a; line-height: 1.55; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      main { max-width: 1000px; margin: auto; padding: 1.25rem; }
+      header { margin-bottom: 1.25rem; }
+      h1 { font-size: clamp(1.35rem, 4vw, 1.9rem); line-height: 1.2; margin: .25rem 0; }
+      h2 { font-size: 1.05rem; margin: 0 0 .6rem; }
+      h3 { font-size: 1.1rem; margin: 0; color: #c4b5fd; }
+      h4 { font-size: 1rem; margin: .7rem 0 .2rem; }
+      p { margin: .5rem 0 .85rem; }
+      a { color: #c4b5fd; }
+      .eyebrow { color: #a5b4fc; font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; }
+      .panel { background: #1e293b; border: 1px solid #475569; border-radius: 12px; padding: 1rem; margin-top: 1rem; }
+      .controls { display: flex; align-items: center; flex-wrap: wrap; gap: .8rem; }
+      label { display: block; flex: 1 1 180px; font-weight: 600; }
+      input { display: block; width: 100%; accent-color: #a5b4fc; margin: .5rem 0; }
+      output { float: right; font-variant-numeric: tabular-nums; color: #c4b5fd; }
+      button { font: inherit; font-weight: 600; color: #fff; background: #4338ca; border: 1px solid #818cf8; border-radius: 8px; padding: .6rem .8rem; cursor: pointer; }
+      button[data-reset] { background: #334155; border-color: #64748b; }
+      button:hover:not(:disabled) { background: #4f46e5; }
+      button:disabled { opacity: .5; cursor: default; }
+      :focus-visible { outline: 3px solid #c4b5fd; outline-offset: 4px; }
+      .muted, caption { color: #cbd5e1; font-size: .85rem; }
+      .path { border-left: 3px solid #a5b4fc; padding: .5rem .75rem; background: #0f172a; overflow-wrap: anywhere; }
+      .table-wrap { overflow-x: auto; }
+      table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; text-align: left; }
+      caption { text-align: left; margin-bottom: .4rem; }
+      th, td { padding: .5rem .6rem; border-bottom: 1px solid #475569; white-space: nowrap; }
+      th { font-size: .85rem; }
+      .repeat { background: #312e81; }
+      .estimates { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+      .estimate { border: 1px solid #475569; border-radius: 8px; padding: .85rem; background: #0f172a; }
+      .estimate p { font-variant-numeric: tabular-nums; overflow-wrap: anywhere; font-size: .9rem; }
+      @media (max-width: 520px) { main { padding: .75rem; } .estimates { grid-template-columns: 1fr; } .controls label { flex-basis: 100%; } }
+    </style>
+  </body>
+</html>

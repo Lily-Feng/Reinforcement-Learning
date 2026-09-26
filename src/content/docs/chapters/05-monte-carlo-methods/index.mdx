@@ -1,0 +1,507 @@
+---
+title: Monte Carlo methods
+description: "Learn from complete episodes: sample returns, first-visit and every-visit prediction, control, and off-policy importance sampling."
+sidebar:
+  order: 1
+---
+
+import DemoFrame from '../../../../components/DemoFrame.astro';
+
+## Learning objective
+
+Estimate a state's value from completed experience, explain how Monte Carlo
+control improves actions, and understand why off-policy learning needs probability
+corrections. Also answer two practical questions: **Can episodes run in parallel?**
+and **How is per-decision importance sampling related to the Markov property?**
+
+## Intuition
+
+Imagine learning a route through an unfamiliar building. You do not know the
+probability of a blocked hallway or the time each route usually takes. You can
+still try a route, finish the trip, and record the outcome.
+
+**Monte Carlo (MC) learning estimates value by averaging what actually happened
+after a state or action.** One lucky trip is weak evidence; many trips give a
+better estimate. Here, “Monte Carlo” means the episodic reinforcement-learning
+methods in this chapter, rather than every use of random sampling in mathematics.
+
+The agent does not need an explicit transition-and-reward model. Its experience
+can come from a real environment **or a simulator** that produces sample episodes.
+Model-free learning does not mean that simulation is forbidden.
+
+## Algorithm and equations
+
+### Return: what happened after this moment?
+
+An episode ends at time $T$. The return after time $t$ is
+
+$$
+G_t = R_{t+1} + \gamma R_{t+2} + \cdots + \gamma^{T-t-1} R_T.
+$$
+
+The discount $\gamma$ determines how much later rewards count. With $\gamma=1$,
+we add all remaining rewards. With a smaller discount, distant rewards count less.
+The terminal state's remaining return is zero.
+
+For example, suppose one completed trip produces:
+
+```text
+A ── reward +2 ──▶ B ── reward −1 ──▶ A ── reward +3 ──▶ terminal
+t = 0             t = 1             t = 2              T = 3
+```
+
+With $\gamma=1$, the returns are:
+
+| Visit | Remaining rewards | Return |
+| --- | --- | --- |
+| First A, at time 0 | $2-1+3$ | $G_0=4$ |
+| B, at time 1 | $-1+3$ | $G_1=2$ |
+| Second A, at time 2 | $3$ | $G_2=3$ |
+
+The reward received **before arriving** at a state is not part of that state's
+return. At the second A, for example, the earlier reward of −1 is already past.
+
+### Prediction: how good is a fixed policy?
+
+A policy $\pi$ tells the agent how to choose actions. Its state-value function is
+
+$$
+v_\pi(s) = \mathbb{E}_\pi[G_t\mid S_t=s].
+$$
+
+Read this as: “If I am in $s$ and follow $\pi$ from here, what return should I
+expect?” Lowercase $v_\pi$ is the true expected value; uppercase $V$ is our estimate.
+Prediction holds the policy fixed while improving the estimate.
+
+If the selected returns for a state are $4,2,6$, then
+
+$$V(s)=\frac{4+2+6}{3}=4.$$
+
+We can keep a running average instead of saving every past return. After
+incrementing the state's sample count $N(s)$:
+
+$$
+V(s) \leftarrow V(s) + \frac{1}{N(s)}\bigl[G_t-V(s)\bigr].
+$$
+
+This is the bandit sample-average update again, with **a whole return** as the
+target instead of one immediate reward. MC does not bootstrap: its target does
+not contain another estimated state value.
+
+### Monte Carlo versus dynamic programming
+
+| Question | Dynamic programming | Monte Carlo |
+| --- | --- | --- |
+| What information is needed? | An explicit model of transitions and rewards | Sample episodes |
+| What does an update use? | Expected immediate reward plus estimated successor values | Observed return to the end of the episode |
+| Does it bootstrap? | Yes | No |
+| Must an episode finish before this update? | No sampled episode is required | Yes, for the full-return methods here |
+
+In the previous chapter, the agent could calculate a one-step lookahead from
+the model. Here, it learns from completed outcomes.
+
+## First-visit and every-visit prediction
+
+One episode can visit a state several times. Which returns should count?
+
+- **First-visit MC:** use the return following the first occurrence of that state
+  **in each episode**. A later episode can contribute another first visit.
+- **Every-visit MC:** use the return following every occurrence of that state.
+
+For the example above, first-visit uses only $4$ for A. Every-visit uses $4$ and
+$3$, so its estimate after this single episode is $3.5$. Both use $2$ for B.
+
+Now add a second episode:
+
+```text
+A ── reward 0 ──▶ B ── reward +2 ──▶ terminal
+```
+
+At $\gamma=1$, A contributes a return of $2$ to both methods:
+
+| Method | A's samples across both episodes | Estimate |
+| --- | --- | --- |
+| First-visit | $4,2$ | $3$ |
+| Every-visit | $4,3,2$ | $3$ |
+
+The agreement here is a coincidence of these numbers. Also notice that
+every-visit averages **visits**, not the separate averages of each episode.
+Averaging $3.5$ and $2$ would give $2.75$, which is a different estimator.
+
+### Independence, bias, and convergence
+
+For a fixed policy in a stationary Markov environment, independently generated
+episodes give independent first-visit returns for a given state. With suitable
+finite moments and repeated visits, averaging them estimates $v_\pi(s)$.
+Returns for different states in the same episode are not necessarily independent.
+
+Every-visit returns within an episode overlap, so they are generally correlated.
+**Every-visit MC is consistent under the usual episodic sampling assumptions,
+but it need not be unbiased with finitely many episodes.** The random number of
+visits and their returns can depend on one another. See Singh and Sutton's
+[analysis of first-visit and every-visit MC](https://web.eecs.umich.edu/~baveja/Papers/Replace.pdf).
+
+“Unbiased” means correct on average over repeated datasets of a given size.
+“Consistent” means approaching the correct value as the dataset grows. These
+are different guarantees.
+
+First-visit has a simpler independence argument. Every-visit uses more of the
+observed visits, but more correlated samples do not guarantee smaller error.
+Neither method is universally better in practice.
+
+<details>
+<summary>A small example showing every-visit bias</summary>
+
+Suppose there is just one nonterminal state A. Each step gives reward $+1$,
+then independently either ends the episode with probability $1/2$ or returns
+to A. Let $\gamma=1$. The expected episode length is $2$, so $v_\pi(A)=2$.
+
+For an episode of length $L$, first-visit estimates $L$, whose expectation is $2$.
+Every-visit uses $L,L-1,\ldots,1$, giving $(L+1)/2$. Its expectation after
+**one episode** is $(2+1)/2=1.5$. It is biased at this sample size, despite
+converging to $2$ when visits are pooled over many independent episodes.
+
+</details>
+
+### A simple prediction algorithm
+
+```text
+Initialize V(s) = 0 and N(s) = 0 for each nonterminal state.
+Repeat with the same policy π:
+    Generate one complete episode using π.
+    G = 0
+    Work backward through the episode:
+        G = reward on this transition + γ × G
+        Save G as the return for this time step.
+    Start an empty set called seen.
+    Work forward through the episode's nonterminal states:
+        If using every-visit, or this state is not in seen:
+            N(state) += 1
+            V(state) += (saved return − V(state)) / N(state)
+        Add this state to seen.
+```
+
+Computing returns backward is efficient. Selecting first visits forward makes
+the meaning unambiguous: the first state seen during a backward scan would be
+the **last** visit in the episode.
+
+## Interactive demo
+
+Replay three fixed example episodes and compare both estimates side by side.
+These are teaching examples, not a simulation establishing convergence.
+Change the discount to recalculate all included returns under the same setting.
+
+<DemoFrame
+  chapter="monte-carlo-methods"
+  demo="returns"
+  title="Monte Carlo return explorer: first-visit and every-visit prediction"
+  source="src/demos/monte-carlo/core.ts"
+  height="940px"
+/>
+
+## What to observe
+
+- Include episode 1 at $\gamma=1$. A has one first-visit sample and two
+  every-visit samples. Their estimates are $4$ and $3.5$.
+- Include episode 2. Both A estimates become $3$, although their sample counts
+  differ. Equal estimates do not mean identical methods.
+- Set $\gamma=0$. Each return becomes just the next reward; later rewards vanish.
+- Set $\gamma=0.5$. Episode 1's first A return becomes
+  $2+0.5(-1)+0.5^2(3)=2.25$, while its last A return stays $3$.
+
+## From state values to action values and control
+
+State values answer “How good is it to be here?” Action values answer the more
+direct decision question: “How good is taking **this action** here, then following
+the policy?”
+
+$$
+q_\pi(s,a)=\mathbb{E}_\pi[G_t\mid S_t=s,A_t=a].
+$$
+
+Suppose that at a hallway junction, the observed returns for going left are
+$2,4,3$, while those for going right are $6,4,5$. Then
+$Q(s,\text{left})=3$ and $Q(s,\text{right})=5$.
+
+A greedy choice is right. We can make that comparison directly from $Q$;
+using state values alone would generally require a transition-and-reward model
+or additional sampled lookahead to evaluate each action.
+
+**Prediction estimates a policy's values. Control uses those estimates to
+improve the policy.** MC control repeats this loop:
+
+1. Collect an episode using an exploratory policy.
+2. Average returns for the visited **state–action pairs** to update $Q$.
+3. Make the policy favor actions with higher $Q$, while preserving exploration.
+
+For first-visit action-value estimation, check the first occurrence of the
+pair $(s,a)$, rather than the first occurrence of $s$ alone.
+
+### Keeping exploration with epsilon-greedy actions
+
+An $\varepsilon$-greedy policy chooses a greedy action with probability
+$1-\varepsilon$, and with probability $\varepsilon$ chooses uniformly among
+**all** available actions, including greedy ones.
+
+With two actions, a unique greedy action, and $\varepsilon=0.1$:
+
+$$
+\pi(\text{right}\mid s)=0.9+0.1/2=0.95,\qquad
+\pi(\text{left}\mid s)=0.1/2=0.05.
+$$
+
+An $\varepsilon$-soft policy gives every action at least
+$\varepsilon/|\mathcal A(s)|$ probability; epsilon-greedy is one way to do that.
+A fixed positive epsilon keeps occasional exploratory choices even after learning.
+It should not be described as automatically converging to an unrestricted,
+deterministic optimal policy. Optimal-control convergence needs additional
+conditions, including adequate visits and an appropriate improvement scheme;
+decreasing epsilon too quickly can prevent enough exploration.
+
+**Exploring starts** is another textbook approach: give every relevant
+state–action pair a positive probability of starting an episode. This supports
+exploration while allowing subsequent actions to be greedy, but many real
+environments cannot reset to arbitrary states and actions.
+
+## Behavior policy, target policy, and coverage
+
+The **behavior policy** $b$ generates the data. The **target policy** $\pi$ is
+the policy we want to evaluate or improve. Learning about the same policy that
+generates the data is on-policy; learning about a different one is off-policy.
+
+For example, an exploratory robot might turn left or right equally often,
+while we want to evaluate a policy that turns right 80% of the time.
+
+The usual coverage condition is
+
+$$\pi(a\mid s)>0 \;\Longrightarrow\; b(a\mid s)>0.$$
+
+It means: **an action the target might take must be possible under the behavior
+policy** at the relevant state. It does not say that every possible state will
+be reached or that a finite dataset contains enough examples. An action with a
+tiny behavior probability may still be almost absent from the data.
+
+## Importance sampling: correcting a sampling mismatch
+
+If right occurs half the time in the data but should occur 80% of the time under
+the target, its outcomes are underrepresented. Give them weight $0.8/0.5=1.6$.
+Left outcomes get weight $0.2/0.5=0.4$.
+
+Consider a one-step task: right gives reward $10$ and left gives $0$. The target
+value is $0.8(10)+0.2(0)=8$. In a dataset with one right and one left:
+
+$$
+\text{Uncorrected average}=5,\qquad
+\text{Corrected average}=\frac{1.6(10)+0.4(0)}{2}=8.
+$$
+
+The exact agreement is specific to this balanced example; finite samples still
+vary. For a multistep return, the state-value importance ratio is
+
+$$
+\rho_{t:T-1}=\prod_{k=t}^{T-1}\frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}.
+$$
+
+Both policies interact with the same environment, so the environment's
+transition factors cancel in the trajectory probability ratio. We need the
+action probabilities, not an explicit environment model. For $q_\pi(s,a)$,
+the starting action is already conditioned on, so the correction starts at
+$t+1$ instead.
+
+### Ordinary and weighted importance sampling
+
+For $n$ independent first-visit return samples for a state, write their returns
+as $G_i$ and their ratios as $\rho_i$:
+
+$$
+V_{\mathrm{ordinary}}(s)=\frac{1}{n}\sum_{i=1}^n\rho_iG_i,
+\qquad
+V_{\mathrm{weighted}}(s)=\frac{\sum_{i=1}^n\rho_iG_i}{\sum_{i=1}^n\rho_i}.
+$$
+
+Ordinary sampling divides by the **sample count**; weighted sampling divides by
+the **total weight**. If the total weight is zero, the weighted estimate has no
+usable evidence yet; leave it unupdated.
+
+For a separate multistep dataset, returns $10,0$ with weights $4,1$ give an ordinary estimate of
+$20$ and a weighted estimate of $8$. Ordinary estimates can exceed all observed
+returns; weighted estimates are averages with normalized nonnegative weights.
+
+Ordinary importance sampling is unbiased in this first-visit setting under
+coverage and integrability assumptions, but can have very large or even infinite
+variance. Weighted importance sampling generally has finite-sample bias, which
+vanishes under suitable convergence assumptions, and is often more stable.
+These distinctions are discussed in
+[Sutton and Barto, Chapter 5](https://www.andrew.cmu.edu/course/10-703/textbook/BartoSutton.pdf).
+
+The difficulty grows with long episodes: multiplying ten ratios of $2$ gives
+$1024$. A rare trajectory can then dominate an ordinary estimate.
+
+## Reading question: can Monte Carlo run in parallel?
+
+**Yes. Steps within one episode depend on earlier steps, but separate environment
+copies can generate episodes at the same time.**
+
+Imagine four simulated robots exploring four independent copies of the same
+building. Each completes its own trip and sends its returns to a shared learner:
+
+```text
+Environment 1 → completed episode → returns ─┐
+Environment 2 → completed episode → returns ─┤
+Environment 3 → completed episode → returns ─┼→ shared value estimates
+Environment 4 → completed episode → returns ─┘
+```
+
+To combine samples correctly, add each worker's return sums and counts:
+
+$$V(s)=\frac{\sum_j\text{return sum}_j(s)}{\sum_j\text{sample count}_j(s)}.$$
+
+For example, if one worker contributes one return averaging $10$ and another
+contributes nine returns averaging $0$, the combined estimate is $1$, not $5$.
+The counts matter. Independent random streams also matter: identical copies of
+the same sampled episode do not provide new independent evidence.
+
+For prediction, workers can share a fixed policy. A simple control setup freezes
+the policy for a batch, collects complete episodes, updates $Q$, then distributes
+an improved policy for the next batch. If workers instead keep collecting with
+older policies, their data is off-policy relative to a newly chosen target;
+the learner must account for that mismatch.
+
+Gymnasium provides `AsyncVectorEnv` for running environment copies in separate
+processes. `SyncVectorEnv` provides a batched interface but steps its copies
+serially. A vector interface alone does not imply concurrent execution.
+See the [SyncVectorEnv documentation](https://gymnasium.farama.org/main/api/vector/sync_vector_env/)
+and [AsyncVectorEnv documentation](https://gymnasium.farama.org/api/vector/async_vector_env/).
+
+Parallel collection can reduce wall-clock time, depending on overhead and
+available hardware. Each full-return MC update still needs its own episode to
+finish. It also requires access to multiple runnable environment copies; an
+unknown physical environment does not automatically supply a simulator.
+
+For a continuing task with no terminal state, the full-return method here
+cannot simply wait forever. Cutting off an episode changes the target unless
+the missing tail is handled. Bootstrapping a tail value leads toward TD and
+$n$-step methods, which are covered next.
+
+## Reading question: Markov property versus per-decision importance sampling
+
+They share an intuition: **identify which information is actually needed**.
+But they simplify different parts of a probability calculation.
+
+| Idea | What it says | Simple example |
+| --- | --- | --- |
+| Markov property | The current state and action suffice to predict the next state and reward | A robot's state includes location and battery level; its full route history adds no further predictive information |
+| Per-decision importance sampling | A reward needs correction only for actions selected before that reward arrived | A turn chosen after collecting a coin is not needed in that coin reward's importance weight |
+
+### The Markov property compresses the past
+
+If $H_t$ denotes the history available before choosing $A_t$, then a Markov state
+satisfies
+
+$$
+p(S_{t+1},R_{t+1}\mid H_t,A_t)
+=p(S_{t+1},R_{t+1}\mid S_t,A_t).
+$$
+
+This is an assumption about the environment and the state representation. If
+battery level affects what happens next but the “state” records only location,
+that representation may fail to be Markov.
+
+### Per-decision sampling removes unnecessary future ratios
+
+Suppose two actions produce rewards $R_1$ and $R_2$. Write the two action ratios
+as $w_0$ and $w_1$. Ordinary trajectory sampling uses
+
+$$w_0w_1(R_1+\gamma R_2).$$
+
+Per-decision sampling instead uses
+
+$$w_0R_1+\gamma w_0w_1R_2.$$
+
+The second action happened **after** $R_1$ was received. Its ratio is needed for
+$R_2$, but not for $R_1$.
+
+For a numerical example, take $R_1=2$, $R_2=10$, $w_0=2$, $w_1=0.5$, and
+$\gamma=1$. Ordinary sampling gives $12$; per-decision sampling gives $14$.
+They need not agree on an individual trajectory. Their expectations agree under
+the sampling assumptions.
+
+Why? Conditional on the history before a future action, its ratio averages to
+one under the behavior policy:
+
+$$
+\mathbb{E}_b\!\left[\frac{\pi(A_k\mid S_k)}{b(A_k\mid S_k)}\middle|H_k\right]
+=\sum_{a:b(a\mid S_k)>0}b(a\mid S_k)
+\frac{\pi(a\mid S_k)}{b(a\mid S_k)}=1.
+$$
+
+This uses coverage and state-based policies. Repeated conditional expectation
+removes the later ratios from each earlier reward term. It does **not** require
+claiming that future actions and past rewards are independent; actions can
+respond to what happened earlier.
+
+For a complete episode, the resulting target is
+
+$$
+\widetilde G_t=
+\sum_{k=t}^{T-1}\gamma^{k-t}\rho_{t:k}R_{k+1}.
+$$
+
+Removing unnecessary ratios can reduce variance, although the variance of the
+whole sum need not be smaller in every problem. Per-decision sampling also
+differs from weighted sampling: one shortens each reward's probability product;
+the other normalizes weights across samples. See
+[Sutton and Barto, §5.9](https://www.andrew.cmu.edu/course/10-703/textbook/BartoSutton.pdf).
+
+The connection to your question is therefore precise: the Markov property
+summarizes **earlier history for predicting the next outcome**. Per-decision
+sampling averages away **later action ratios when weighting earlier rewards**.
+The latter reasoning can also use history-dependent policies with ratios
+conditioned on history; it is not a consequence of the Markov property alone.
+
+## Video companion
+
+Use [*Monte Carlo Prediction | Fully Explained*](https://www.youtube.com/watch?v=FDeQlEgIVIE)
+alongside the examples above. These timestamps and topic labels come from the
+supplied viewing notes; the video transcript was not independently accessible.
+The numerical examples and interactive replay on this page are original teaching
+examples, not reproductions of the video's examples.
+
+| Time in the supplied notes | Topic | Try while watching |
+| --- | --- | --- |
+| [2:05–7:03](https://www.youtube.com/watch?v=FDeQlEgIVIE&t=125s) | Value functions and sampled returns | Explain the difference between one observed $G_t$ and the expectation $v_\pi(s)$ |
+| [7:05–8:20](https://www.youtube.com/watch?v=FDeQlEgIVIE&t=425s) | MC versus DP | Identify the information each update needs |
+| [8:42–12:20](https://www.youtube.com/watch?v=FDeQlEgIVIE&t=522s), [14:14–16:00](https://www.youtube.com/watch?v=FDeQlEgIVIE&t=854s) | First-visit MC | Select A's first return in each example episode |
+| [12:21–14:13](https://www.youtube.com/watch?v=FDeQlEgIVIE&t=741s), [16:01–18:43](https://www.youtube.com/watch?v=FDeQlEgIVIE&t=961s) | Every-visit MC | Include A's repeated visit and compare sample counts |
+| [18:44–20:27](https://www.youtube.com/watch?v=FDeQlEgIVIE&t=1124s) | Comparing the methods | Distinguish consistency, independence, and finite-sample bias |
+
+## Common mistakes
+
+- Calling every-visit MC always unbiased, or always more accurate because it
+  uses more visits. Both claims need qualification.
+- Treating “first visit” as the first time a state is seen during all training.
+  The first-visit rule resets for every episode.
+- Thinking coverage guarantees that everything has already been explored.
+  Positive probability is not the same as enough collected evidence.
+- Multiplying early rewards by unnecessary later action ratios, or assuming
+  weighted and per-decision importance sampling are the same adjustment.
+- Treating a time-limit cutoff as a true terminal state without considering
+  the missing future rewards.
+
+## Personal takeaways
+
+Monte Carlo makes value learning concrete: finish an episode, look back at its
+returns, and average the evidence. Prediction asks how well a policy performs;
+control uses action values to make better choices while continuing to explore.
+
+My parallelism question separates the order of events inside a single episode
+from the ability to collect many episodes at once. My Markov-property question
+separates sufficient information about the past from unnecessary weighting by
+future decisions. Both distinctions make the equations easier to interpret.
+
+## References
+
+- Sutton, R. S. & Barto, A. G. [*Reinforcement Learning: An Introduction*, 2nd ed.](https://www.andrew.cmu.edu/course/10-703/textbook/BartoSutton.pdf), Chapter 5, especially §5.1–5.6 and §5.9.
+- Singh, S. P. & Sutton, R. S. (1996). [*Reinforcement Learning with Replacing Eligibility Traces*](https://web.eecs.umich.edu/~baveja/Papers/Replace.pdf), analysis of first-visit and every-visit MC.
+- Farama Foundation. [Gymnasium vector environments](https://gymnasium.farama.org/api/vector/), for the practical parallel-collection discussion.
+- [Companion video](https://www.youtube.com/watch?v=FDeQlEgIVIE), with the viewing guide based on the supplied notes.
