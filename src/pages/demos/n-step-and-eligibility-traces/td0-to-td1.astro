@@ -1,0 +1,155 @@
+---
+import { chapterUrl } from '../../../lib/url';
+const backHref = chapterUrl('07-n-step-and-eligibility-traces');
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Compare two n-step TD learners, from TD(0) to Monte Carlo, on the 19-state random walk using identical episodes." />
+    <title>From TD(0) to TD(1)</title>
+  </head>
+  <body>
+    <main data-nstep>
+      <aside class="sidebar">
+        <header>
+          <p class="eyebrow">n-step bootstrapping · <a href={backHref} target="_top">← chapter</a></p>
+          <h1>From TD(0) to TD(1)</h1>
+          <p class="muted">19-state random walk. Start at state 10; −1 off the left end, +1 off the right. True V(i) = (i − 10)/10. Both streams see the <strong>same</strong> episodes.</p>
+        </header>
+
+        <section class="card" aria-label="Shared experience">
+          <label for="episodes">Episodes per run <output data-episodes-value for="episodes">50</output>
+            <input id="episodes" data-episodes type="range" min="5" max="200" step="5" value="50" />
+          </label>
+          <div class="row">
+            <label for="runs">Runs
+              <select id="runs" data-runs>
+                <option value="1">1 (noisy)</option>
+                <option value="10">10</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+              </select>
+            </label>
+            <label for="seed">Seed
+              <input id="seed" data-seed type="text" value="7" inputmode="numeric" />
+            </label>
+          </div>
+        </section>
+
+        {(['a', 'b'] as const).map(key => (
+          <section class="card stream" data-stream={key} aria-labelledby={`${key}-heading`}>
+            <h2 id={`${key}-heading`}><span class={`dot ${key}`}></span>Stream {key.toUpperCase()} · <span data-label></span></h2>
+            <div class="toggles" role="group" aria-label={`Stream ${key.toUpperCase()} n`} data-n-group></div>
+            <label>Step size α <output data-alpha-value>0.40</output>
+              <input data-alpha type="range" min="0.05" max="1" step="0.05" />
+            </label>
+            <p class="reach" data-reach></p>
+            <dl class="stats">
+              <div><dt>Avg RMS</dt><dd data-average>–</dd></div>
+              <div><dt>Final RMS</dt><dd data-final>–</dd></div>
+            </dl>
+          </section>
+        ))}
+
+        <button data-swap type="button">Swap A ⇄ B</button>
+      </aside>
+
+      <section class="charts">
+        <p class="status" data-status role="status"></p>
+
+        <figure class="chart wide">
+          <figcaption>
+            <h2>Learning curves <span class="hint">RMS error after each episode, lower is better</span></h2>
+            <span class="legend"><span><i class="a"></i>A</span><span><i class="b"></i>B</span></span>
+          </figcaption>
+          <canvas data-curve role="img" aria-label="RMS error against episodes for streams A and B"></canvas>
+        </figure>
+
+        <figure class="chart">
+          <figcaption>
+            <h2>Final estimates <span class="hint">state 1 → 19</span></h2>
+            <span class="legend"><span><i class="truth"></i>True</span><span><i class="a"></i>A</span><span><i class="b"></i>B</span></span>
+          </figcaption>
+          <canvas data-values role="img" aria-label="Final value estimates for states 1 to 19 against the true values"></canvas>
+        </figure>
+
+        <figure class="chart">
+          <figcaption>
+            <h2>Every n vs α <span class="hint">avg RMS, first 10 episodes</span></h2>
+            <span class="legend"><span><i class="a"></i>A's n</span><span><i class="b"></i>B's n</span><span><i class="other"></i>other</span></span>
+          </figcaption>
+          <canvas data-sweep role="img" aria-label="Average RMS error over the first 10 episodes against step size for every n"></canvas>
+          <p class="best" data-sweep-best></p>
+        </figure>
+      </section>
+      <noscript>This experiment needs JavaScript.</noscript>
+    </main>
+    <script>
+      import { initNStepComparison } from '../../../demos/n-step/render';
+      initNStepComparison();
+    </script>
+    <style is:global>
+      :root { color-scheme: dark; font-family: ui-sans-serif, system-ui, sans-serif; color: #e2e8f0; background: #0f172a; line-height: 1.4; font-size: 14px; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      /* One screen: the sidebar holds every control, the charts share whatever height is left. */
+      main { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: .75rem; height: 100vh; height: 100dvh; padding: .75rem; }
+      .sidebar { display: flex; flex-direction: column; gap: .5rem; min-height: 0; overflow-y: auto; }
+      h1 { font-size: 1.25rem; line-height: 1.2; margin: .1rem 0 .25rem; }
+      h2 { font-size: .9rem; margin: 0; }
+      p { margin: 0; }
+      a { color: #c4b5fd; }
+      .eyebrow { color: #a5b4fc; font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; }
+      .eyebrow a { text-transform: none; letter-spacing: 0; }
+      .muted { color: #cbd5e1; font-size: .78rem; }
+      .card { background: #1e293b; border: 1px solid #475569; border-radius: 10px; padding: .55rem .7rem; display: flex; flex-direction: column; gap: .4rem; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+      label { display: block; font-weight: 600; font-size: .8rem; }
+      input[type=range] { display: block; width: 100%; accent-color: #a5b4fc; margin: .2rem 0 0; }
+      input[type=text], select { display: block; width: 100%; margin-top: .2rem; font: inherit; color: inherit; background: #0f172a; border: 1px solid #64748b; border-radius: 6px; padding: .25rem .45rem; }
+      output { float: right; font-variant-numeric: tabular-nums; color: #c4b5fd; }
+      button { font: inherit; font-weight: 600; color: #fff; background: #334155; border: 1px solid #64748b; border-radius: 6px; padding: .35rem .7rem; cursor: pointer; }
+      button:hover { background: #475569; }
+      :focus-visible { outline: 3px solid #c4b5fd; outline-offset: 2px; }
+      .stream[data-stream="a"] { border-color: #60a5fa; }
+      .stream[data-stream="b"] { border-color: #fb923c; }
+      .dot { display: inline-block; width: .6rem; height: .6rem; border-radius: 50%; margin-right: .35rem; }
+      .dot.a, .legend i.a { background: #60a5fa; }
+      .dot.b, .legend i.b { background: #fb923c; }
+      .legend i.truth { background: #e2e8f0; }
+      .legend i.other { background: #64748b; }
+      .toggles { display: grid; grid-template-columns: repeat(7, 1fr); gap: .25rem; }
+      .toggles button { padding: .25rem 0; font-size: .8rem; }
+      [data-stream="a"] .toggles button[aria-pressed="true"] { background: #1d4ed8; border-color: #60a5fa; }
+      [data-stream="b"] .toggles button[aria-pressed="true"] { background: #c2410c; border-color: #fb923c; }
+      .reach { border-left: 3px solid #64748b; padding: .2rem .5rem; background: #0f172a; font-size: .75rem; color: #cbd5e1; min-height: 2.6em; }
+      .stats { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; margin: 0; }
+      .stats div { display: flex; justify-content: space-between; align-items: baseline; background: #0f172a; border-radius: 6px; padding: .25rem .5rem; }
+      dt { font-size: .72rem; color: #cbd5e1; }
+      dd { margin: 0; font-size: 1rem; font-weight: 700; font-variant-numeric: tabular-nums; }
+      .sidebar > button { align-self: flex-start; }
+
+      .charts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); grid-template-rows: auto minmax(0, 1.15fr) minmax(0, 1fr); gap: .6rem; min-height: 0; }
+      .status { grid-column: 1 / -1; background: #1e293b; border: 1px solid #475569; border-radius: 10px; padding: .45rem .7rem; font-size: .85rem; }
+      .chart { margin: 0; display: flex; flex-direction: column; min-height: 0; min-width: 0; background: #1e293b; border: 1px solid #475569; border-radius: 10px; padding: .5rem .7rem; }
+      .chart.wide { grid-column: 1 / -1; }
+      figcaption { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .25rem .75rem; margin-bottom: .25rem; }
+      .hint { font-weight: 400; color: #94a3b8; font-size: .75rem; margin-left: .4rem; }
+      .legend { display: flex; gap: .7rem; font-size: .75rem; }
+      .legend i { display: inline-block; width: 1rem; height: 3px; vertical-align: middle; margin-right: .3rem; }
+      canvas { display: block; width: 100%; min-width: 0; flex: 1 1 0; min-height: 0; }
+      .best { font-size: .7rem; color: #94a3b8; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: .2rem; }
+
+      /* Too narrow for side-by-side: stack and let the page scroll. */
+      @media (max-width: 820px) {
+        main { display: block; height: auto; }
+        .sidebar { overflow: visible; margin-bottom: .75rem; }
+        .charts { display: flex; flex-direction: column; }
+        .chart { height: 260px; }
+      }
+    </style>
+  </body>
+</html>

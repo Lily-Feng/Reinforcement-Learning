@@ -25,6 +25,13 @@ const simulations: Simulation[] = [
     demo: 'epsilon-greedy',
     topic: 'Multi-armed bandits',
   },
+  {
+    title: 'From TD(0) to TD(1)',
+    description: 'Race two n-step TD learners on the same random-walk episodes and see how n trades bias for variance.',
+    chapter: 'n-step-and-eligibility-traces',
+    demo: 'td0-to-td1',
+    topic: 'n-step bootstrapping',
+  },
 ];
 ---
 
@@ -68,6 +75,24 @@ const simulations: Simulation[] = [
                 <text x="342" y="173" fill="#edf3f1" font-size="22">V(s) ← max Q(s,a)</text>
                 <text x="342" y="219" fill="#c6ef85" font-size="14">KNOWN MODEL</text>
                 <text x="342" y="245" fill="#a4b5ba" font-size="14">One state at a time.</text>
+              </g>
+            ) : simulation.demo === 'td0-to-td1' ? (
+              <g font-family="system-ui, sans-serif">
+                <text x="46" y="48" fill="#94a3b8" font-size="14">RMS ERROR · SAME EPISODES</text>
+                <line x1="46" y1="292" x2="400" y2="292" stroke="#475569" stroke-width="2" />
+                <line x1="46" y1="70" x2="46" y2="292" stroke="#475569" stroke-width="2" />
+                <path d="M46 82 C 110 140, 170 205, 230 238 S 340 252, 400 248" fill="none" stroke="#60a5fa" stroke-width="5" stroke-linecap="round" />
+                <path d="M46 82 C 70 160, 95 205, 130 214 S 260 196, 400 202" fill="none" stroke="#fb923c" stroke-width="5" stroke-linecap="round" />
+                <text x="46" y="318" fill="#94a3b8" font-size="13">episodes →</text>
+                <g transform="translate(436 78)">
+                  <rect width="160" height="190" rx="18" fill="#0f172a" stroke="#334155" stroke-width="2" />
+                  <text x="20" y="34" fill="#94a3b8" font-size="13">STREAMS</text>
+                  <circle cx="28" cy="70" r="8" fill="#60a5fa" />
+                  <text x="44" y="77" fill="#f8fafc" font-size="22" font-weight="700">n = 1</text>
+                  <circle cx="28" cy="114" r="8" fill="#fb923c" />
+                  <text x="44" y="121" fill="#f8fafc" font-size="22" font-weight="700">n = 4</text>
+                  <text x="20" y="164" fill="#d9ff62" font-size="14" font-weight="700">TD(0) ⟷ MC</text>
+                </g>
               </g>
             ) : (<g>
             <g transform="translate(54 50)">
