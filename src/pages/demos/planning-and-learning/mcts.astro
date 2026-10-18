@@ -1,0 +1,82 @@
+---
+import { chapterUrl, demoUrl } from '../../../lib/url';
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Watch MCTS grow a tree, choose actions with UCT, simulate rollout trajectories, calculate returns, and back up every visited node." />
+    <title>MCTS search lab · Chapter 8</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <a href={chapterUrl('08-planning-and-learning')} target="_top">← Chapter 8</a>
+        <a href={demoUrl('planning-and-learning', 'mcts-exercise')} class="exercise">Original five-node exercise ↗</a>
+        <h1>MCTS search lab</h1>
+        <p>Grow a search tree from one state. Follow every action, rollout reward, and value update across 18 iterations.</p>
+      </header>
+      <section class="toolbar" aria-label="Search configuration">
+        <label>Tree policy<select data-policy><option value="uct">UCT · explore + exploit</option><option value="greedy">Greedy · mean return only</option></select></label>
+        <label>Rollout seed<input data-seed type="number" min="0" max="999999" value="7" /></label>
+        <label>Playback speed<select data-speed><option value="2200">Slow · 2.2 s</option><option value="1200" selected>Normal · 1.2 s</option><option value="450">Fast · 0.45 s</option></select></label>
+        <p>Model: left → 2s, right → 2s + 1. Terminal states 8–15 end the episode. γ = 1. Changing policy or seed restarts the search.</p>
+      </section>
+      <section class="playback" aria-label="Playback controls">
+        <div class="buttons"><button data-back disabled>← Back</button><button data-next class="primary">Next operation →</button><button data-play>Play</button><button data-finish>Finish iteration</button><button data-reset>Reset</button></div>
+        <label class="timeline">Timeline <output data-progress></output><input data-timeline type="range" min="0" max="1" value="0" aria-label="Operation in search timeline" /></label>
+      </section>
+      <div class="layout">
+        <section class="tree-card" aria-label="Search tree">
+          <div class="heading"><h2>The stored search tree</h2><span data-tree-size></span></div>
+          <div class="legend"><span class="stored">● Stored node</span><span class="ghost">◌ Rollout only</span><span>● Untried action</span><span class="selected">━ Selection</span><span class="backed">● Backup</span></div>
+          <div class="tree-scroll"><svg data-tree viewBox="0 0 1000 550" role="img" aria-labelledby="tree-title tree-description"><title id="tree-title">Growing Monte Carlo search tree</title><desc id="tree-description">Blue nodes persist in the search tree; dashed amber nodes are temporary rollout states. Node statistics appear in the table below.</desc><g data-edges></g><g data-nodes></g></svg></div>
+          <div class="environment"><h3>Environment terminal payoffs</h3><p>These rewards belong to the model. Search estimates are learned from sampled trajectories.</p><div class="payoffs">{[8,9,10,11,12,13,14,15].map((id, i) => <span class={[0,1,1,0,1,0,0,1][i] ? 'win' : 'loss'}>State {id}: {[0,1,1,0,1,0,0,1][i]}</span>)}</div></div>
+        </section>
+        <aside class="explanation">
+          <ol class="phases" aria-label="MCTS operations"><li data-phase="select">1 Select</li><li data-phase="expand">2 Expand</li><li data-phase="rollout">3 Roll out</li><li data-phase="backup">4 Back up</li></ol>
+          <p class="eyebrow" data-iteration></p>
+          <div role="status" aria-live="polite" aria-atomic="true"><h2 data-title>Start with an empty search tree</h2><p data-detail></p><div class="formula" data-formula></div></div>
+          <section class="trace"><h3>Selected tree path</h3><p data-path></p><h3>Rollout trajectory</h3><p data-rollout></p><p data-return></p></section>
+          <section data-scores hidden><h3>Compare action scores</h3><table><thead><tr><th>State</th><th>W/N</th><th>Bonus</th><th>Score</th></tr></thead><tbody data-choices></tbody></table><p class="hint">UCT uses c = √2. A bonus affects selection; it is never added to W.</p></section>
+          <label>Jump to an iteration<select data-iteration-jump aria-label="Jump to iteration"></select></label>
+          <label>See an operation<select data-operation-jump><option value="">Choose an operation…</option><option value="expand">Add a node</option><option value="select-score">Compare selection scores</option><option value="rollout">Take a rollout action</option><option value="return-success">Calculate success return</option><option value="return-failure">Calculate failure return</option><option value="backup">Back up a value</option><option value="backup-average">Update an existing average</option><option value="terminal">Reach a terminal directly</option><option value="choose">Choose the real action</option></select></label>
+        </aside>
+      </div>
+      <section class="results">
+        <div class="heading"><h2>Inspect the node statistics</h2><label>State<select data-inspect aria-label="Inspect state statistics"></select></label></div>
+        <p data-inspector></p>
+        <p class="hint">W = sum of terminal returns (successes here), N = backed-up visits, V = W/N. An unvisited node has no estimated value. Click any stored node to inspect it.</p>
+        <div class="table-scroll"><table><thead><tr><th>State</th><th>W</th><th>N</th><th>V = W/N</th><th>Untried actions</th><th>This operation</th></tr></thead><tbody data-statistics></tbody></table></div>
+      </section>
+      <noscript>This interactive lab needs JavaScript. MCTS repeatedly selects a path, adds a node, simulates a rollout, and backs up its return.</noscript>
+    </main>
+    <script>
+      import { initSearchLab } from '../../../demos/mcts/lab';
+      initSearchLab();
+    </script>
+    <style is:global>
+      :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #0d1524; color: #e2e8f0; line-height: 1.5; }
+      * { box-sizing: border-box; } body { margin: 0; } main { max-width: 1440px; margin: auto; padding: 1.2rem; }
+      a { color: #c4b5fd; font-size: .85rem; } .exercise { float: right; } h1 { margin: .4rem 0; font-size: 1.8rem; } h2 { font-size: 1.05rem; margin: 0 0 .5rem; } h3 { font-size: .8rem; margin: .65rem 0 .3rem; } p { margin: .4rem 0 .7rem; } header p, .hint { color: #b2c0d3; }
+      .toolbar, .playback, .tree-card, .explanation, .results { background: #172338; border: 1px solid #40516b; border-radius: 12px; padding: 1rem; }
+      .toolbar { display: flex; align-items: end; gap: .9rem; flex-wrap: wrap; margin: 1rem 0 .75rem; }
+      label { display: block; font-size: .78rem; font-weight: 600; } select, input[type=number] { display: block; margin-top: .3rem; padding: .45rem; max-width: 100%; }
+      .toolbar p { font-size: .78rem; color: #b2c0d3; flex: 1; min-width: 180px; margin: 0; } input[type=number] { width: 110px; }
+      select, input, button { font: inherit; } select, input[type=number], button { background: #0d1524; color: #e2e8f0; border: 1px solid #71829c; border-radius: 6px; }
+      button { cursor: pointer; padding: .5rem .7rem; font-size: .85rem; } button.primary { background: #c4b5fd; color: #211743; font-weight: 700; } button:disabled { opacity: .4; cursor: default; } :focus-visible { outline: 3px solid #fbbf24; outline-offset: 3px; }
+      .playback { display: flex; gap: 1.2rem; align-items: center; flex-wrap: wrap; } .buttons { display: flex; gap: .4rem; flex-wrap: wrap; } .timeline { flex: 1; min-width: 200px; } .timeline input { width: 100%; accent-color: #c4b5fd; display: block; } output { float: right; color: #c4b5fd; font-weight: 400; }
+      .layout { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: .9rem; margin: .9rem 0; align-items: start; } .tree-card, .explanation { min-width: 0; } .heading { display: flex; align-items: center; justify-content: space-between; gap: .6rem; } .heading span { font-size: .8rem; color: #a5b4fc; }
+      .legend { display: flex; gap: .8rem; flex-wrap: wrap; font-size: .72rem; color: #a0afc6; } .legend .stored { color: #b9dbf5; } .legend .ghost { color: #fbbf24; } .legend .selected { color: #c4b5fd; } .legend .backed { color: #6ee7b7; }
+      .tree-scroll { overflow: auto; } svg { display: block; width: 100%; min-width: 650px; } svg text { font-family: system-ui, sans-serif; text-anchor: middle; fill: #dbe6f5; } svg .edge { stroke: #566a87; stroke-width: 2; } svg .edge.selected { stroke: #c4b5fd; stroke-width: 4; } svg .edge.rollout { stroke: #fbbf24; stroke-width: 3; stroke-dasharray: 7 5; } svg .edge.backup { stroke: #6ee7b7; stroke-width: 5; }
+      svg .node circle { fill: #b9dbf5; stroke: #82a9ce; stroke-width: 2; } svg .node .count { fill: #102238; font-size: 17px; font-weight: 700; } svg .node .label { font-size: 15px; fill: #d1def0; } svg .node .value { font-size: 14px; fill: #c1cee0; } svg .node { cursor: pointer; } svg .node.active circle { stroke: #c4b5fd; stroke-width: 5; } svg .node.updated circle { stroke: #6ee7b7; fill: #a7f3d0; stroke-width: 5; } svg .node.ghost circle { fill: #342916; stroke: #fbbf24; stroke-dasharray: 5 4; } svg .node.ghost .count { fill: #fbbf24; font-size: 15px; } svg .dot { fill: #02050a; stroke: #91a1b9; stroke-width: 2; } svg .dot-label { font-size: 13px; fill: #91a1b9; }
+      @media (prefers-reduced-motion: no-preference) { svg .node { animation: appear .3s ease-out; } @keyframes appear { from { opacity: .3; } to { opacity: 1; } } }
+      .environment { border-top: 1px solid #40516b; padding-top: .3rem; } .environment p { font-size: .75rem; color: #a0afc6; } .payoffs { display: flex; gap: .4rem; flex-wrap: wrap; font-size: .75rem; } .payoffs span { border-radius: 4px; padding: .25rem .4rem; } .win { background: #123e37; color: #a7f3d0; } .loss { background: #422a35; color: #fecdd3; }
+      .phases { display: flex; flex-wrap: wrap; list-style: none; padding: 0; margin: 0 0 .7rem; gap: .3rem; font-size: .72rem; } .phases li { background: #0d1524; padding: .3rem .45rem; border-radius: 4px; } .phases .active { background: #c4b5fd; color: #211743; } .eyebrow { text-transform: uppercase; letter-spacing: .08em; color: #a5b4fc; font-size: .7rem; } [data-detail] { font-size: .85rem; min-height: 5em; } .formula { background: #0d1524; border-left: 3px solid #6ee7b7; padding: .65rem; font: .8rem/1.7 ui-monospace, monospace; overflow-wrap: anywhere; white-space: pre-wrap; } .formula:empty { display: none; } .trace p { font-size: .8rem; } .explanation > label { margin-top: .8rem; } .explanation select { width: 100%; } .hint { font-size: .75rem; }
+      table { width: 100%; border-collapse: collapse; font-size: .8rem; font-variant-numeric: tabular-nums; } th, td { text-align: left; padding: .45rem; border-bottom: 1px solid #40516b; } tr.updated { background: #153e38; } tr.inspect { outline: 1px solid #a5b4fc; outline-offset: -1px; } .table-scroll { max-height: 300px; overflow: auto; } [data-inspector] { font-size: .85rem; color: #c4b5fd; } [hidden] { display: none !important; }
+      @media (max-width: 980px) { .layout { grid-template-columns: 1fr; } .explanation { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem 1rem; } .explanation .phases, .explanation .eyebrow { grid-column: 1/-1; } }
+      @media (max-width: 560px) { main { padding: .6rem; } .exercise { float: none; display: block; margin-top: .5rem; } .explanation { display: block; } .toolbar { gap: .6rem; } .toolbar label:first-child { width: 100%; } .toolbar label:first-child select { width: 100%; } }
+    </style>
+  </body>
+</html>

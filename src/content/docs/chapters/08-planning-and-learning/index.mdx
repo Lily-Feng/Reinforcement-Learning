@@ -1,0 +1,316 @@
+---
+title: Planning and learning
+description: "Combine real and simulated experience with Dyna-Q, Dyna-Q+, prioritized sweeping, and decision-time planning with MCTS."
+sidebar:
+  order: 1
+---
+
+import DemoFrame from '../../../../components/DemoFrame.astro';
+
+## Learning objective
+
+Explain how models turn experience into additional learning opportunities.
+Compare background planning with planning at the current decision, and trace
+how Monte Carlo tree search (MCTS) backs up a simulated return.
+
+## Models and planning
+
+A **model** predicts how the environment responds to an action. Given a state
+and action, it describes the next state and reward. A **distribution model**
+provides probabilities $p(s',r\mid s,a)$; a **sample model** generates a possible
+next state and reward without necessarily exposing those probabilities.
+A model can be given in advance or learned from real experience.
+
+**Planning** uses a model to improve value estimates or a policy. **Direct
+reinforcement learning** makes these improvements from actual interaction.
+Both can use the same update rule: what differs is where the experience comes
+from. In this chapter, model-based planning means computation using a model,
+not necessarily learning that model.
+
+For example, after observing that moving right from a corridor reaches a goal,
+an agent can store that transition. It can then replay simulated transitions
+leading into the corridor to propagate the goal's reward backward without
+physically walking those paths again. A model of a stochastic environment must
+also capture uncertainty; deterministic transitions are a useful special case.
+
+## Dyna-Q: learn, model, and plan
+
+Dyna-Q combines three processes in one agent:
+
+1. **Direct learning:** update action values from a real transition.
+2. **Model learning:** update the model using that transition.
+3. **Planning:** generate experience from the model and update action values again.
+
+For a real transition $(S,A,R,S')$, the direct Q-learning update is
+
+$$
+Q(S,A) \leftarrow Q(S,A) + \alpha\left[R + \gamma\max_a Q(S',a) - Q(S,A)\right].
+$$
+
+Here $\alpha$ is the step size and $\gamma$ is the discount factor. At a terminal
+next state, the bootstrap term is zero.
+
+In the basic deterministic version, the model stores the latest observed
+reward and next state for each experienced state–action pair. One real step
+then looks like this:
+
+```text
+Choose A from S using an exploratory policy derived from Q
+Execute A; observe reward R and next state S'
+Update Q(S, A) from the real transition
+Store Model(S, A) = (R, S', terminal)
+Repeat n planning steps:
+    Sample a previously observed state and an action tried there
+    Retrieve its modeled reward, next state, and terminal flag
+    Apply the same Q-learning update to this simulated transition
+Continue from S', or reset if terminal
+```
+
+With $n=0$, this reduces to ordinary Q-learning. More planning steps can spread
+new reward information through previously experienced paths using fewer real
+interactions. They also consume computation, and their benefit depends on the
+accuracy and coverage of the model. They do not guarantee an optimal route
+when exploration is insufficient or the model is wrong.
+
+## Dyna-Q+: handling a changing environment
+
+An accurate model can become outdated. If a new shortcut opens in a maze,
+ordinary Dyna-Q may continue planning with the old model and following a
+familiar route. It needs to try the relevant action again to discover the change.
+
+Dyna-Q+ encourages this with a bonus in **simulated planning rewards**:
+
+$$
+R_{\text{planning}} = \hat R(s,a) + \kappa\sqrt{\tau(s,a)}.
+$$
+
+Here $\hat R(s,a)$ is the modeled reward, $\tau(s,a)$ is the number of **real
+environment steps** since the pair was last tried, and $\kappa\geq 0$ controls
+the bonus. Planning updates do not reset this clock; actually trying the action
+does. The observed reward used for direct learning remains the environment's reward.
+
+This creates a form of computational curiosity: a long-neglected action becomes
+more attractive in planning, which can eventually change the behavior policy
+and lead to a real test of that action. For example, if $\kappa=0.01$ and an
+action has been untried for 100 real steps, its planning bonus is $0.1$.
+
+Dyna-Q+ also allows planning with untried actions in already encountered states.
+They are initially modeled as returning to the same state with zero reward,
+and their elapsed-time bonus provides an incentive to investigate. The bonus
+encourages discovery; only real interaction reveals whether a shortcut exists.
+
+## Prioritized sweeping: plan where values changed
+
+Basic Dyna-Q samples planning updates without considering how much they could
+matter. **Prioritized sweeping** concentrates computation on state–action
+pairs whose modeled targets differ substantially from their current estimates.
+
+For a deterministic modeled transition, a useful priority is the absolute TD error:
+
+$$
+P(s,a) = \left|\hat R(s,a) + \gamma\max_b Q(\hat S'(s,a),b) - Q(s,a)\right|.
+$$
+
+Use zero for the next-state value if the transition is terminal. Put pairs with
+priority above a small threshold into a priority queue. During planning:
+
+1. Remove a pair with the highest priority and update its action value.
+2. Find its **predecessors**: modeled state–action pairs that can lead into the updated state.
+3. Recompute their priorities and enqueue those whose errors exceed the threshold.
+4. Continue until the planning budget is exhausted or the queue is empty.
+
+If a goal reward is discovered, updates can work backward through the states
+that lead to it. This often uses fewer planning backups than random sampling,
+especially when changes affect a small part of the model. A fixed speedup such
+as “5 to 10 times faster” is task-dependent, rather than a general guarantee;
+maintaining predecessors and a queue also has a cost.
+
+## Expected updates versus sample updates
+
+An expected Q-learning target sums over all modeled outcomes:
+
+$$
+Q(s,a) \leftarrow Q(s,a) + \alpha\left[
+\sum_{s',r}p(s',r\mid s,a)
+\left(r+\gamma\max_b Q(s',b)\right)-Q(s,a)\right].
+$$
+
+Terminal outcomes contribute no bootstrap value. A sample update instead draws
+one outcome $(S',R)$ from the model and uses $R+\gamma\max_b Q(S',b)$.
+
+| Update | Computation per backup | Main tradeoff |
+| --- | --- | --- |
+| Expected | Sum over possible outcomes | No outcome-sampling noise, but potentially costly with many successors |
+| Sample | Use one sampled outcome | Cheaper per backup, but individual targets are noisy |
+
+An expected target is exact **with respect to the current model and current
+value estimates**; it is not necessarily the true value. With a large stochastic
+branching factor and limited computation, sample updates can make useful
+progress across more state–action pairs before one full expected backup finishes.
+Neither approach is universally best.
+
+## Trajectory sampling and RTDP
+
+Planning must decide both **how to update** and **where to update**. Exhaustive
+sweeps visit every state. On-policy trajectory sampling follows simulated
+trajectories under the current behavior policy, concentrating updates on states
+the agent is likely to encounter from its start states.
+
+**Real-Time Dynamic Programming (RTDP)** applies Bellman optimality backups to
+states encountered along trajectories. With a known model, its state-value
+backup is
+
+$$
+V(s) \leftarrow \max_a\sum_{s',r}p(s',r\mid s,a)
+\left[r+\gamma V(s')\right],
+$$
+
+with terminal values fixed at zero. The next state visited can come from real
+interaction or a simulated trajectory; action choices guide which states get
+further computation. Standard RTDP follows greedy actions with respect to its
+current value estimates.
+
+A large map may contain regions irrelevant to the current start and goal.
+Trajectory-focused planning can avoid spending equal effort on all of them.
+However, an important but rarely visited alternative may receive too few
+updates. Convergence requires suitable assumptions about initialization,
+exploration or visitation, and the task; focusing on trajectories alone is not
+a guarantee of finding the best policy.
+
+## Decision-time planning
+
+**Background planning**, as in Dyna, improves stored estimates that support many
+future decisions. **Decision-time planning** spends computation on the current
+state to choose the next action. The agent can repeat this process after each
+real action, when it observes its new state.
+
+### Rollout algorithms
+
+For each candidate action, simulate taking that action and then following a
+**base policy**. Average the resulting returns and choose an action with a high
+estimated return. A finite rollout may use a value estimate at its cutoff.
+The quality of the base policy, model, number of simulations, and rollout horizon
+all affect the decision. Rollouts compare possible futures without executing
+all of them in the real environment.
+
+### Monte Carlo tree search (MCTS)
+
+MCTS is the central algorithm in this chapter. It grows a local search tree
+through repeated simulations, allocating more computation to promising actions
+while also exploring alternatives. One iteration has four phases:
+
+1. **Selection:** follow a tree policy through the existing tree.
+2. **Expansion:** add a state reached through an untried action.
+3. **Simulation:** run a rollout from the new state using a rollout policy.
+4. **Backup:** propagate the sampled return through the visited path and update statistics.
+
+These phases repeat until the search budget is used. The agent then chooses a
+root action using the accumulated statistics, often by selecting the most
+visited root action. The policy used during search and the final action choice
+need not be the same.
+
+A common selection rule is **UCT** (Upper Confidence bounds applied to Trees).
+At state $s$, it chooses an action maximizing
+
+$$
+\hat Q(s,a) + c\sqrt{\frac{\ln N(s)}{N(s,a)}}.
+$$
+
+Here $\hat Q(s,a)$ is the mean sampled return, $N(s)$ counts visits to the parent,
+$N(s,a)$ counts trials of the action, and $c>0$ controls exploration. Untried
+actions need explicit handling before evaluating this expression because their
+visit counts are zero. The first term favors good observed returns; the second
+favors actions with fewer trials.
+
+The following exercise deliberately uses a **greedy** tree policy instead of
+UCT so that selection and backup are easy to trace. Its returns are binary,
+so successes / visits is also the mean return. In general MCTS backs up returns,
+which need not be success probabilities.
+
+### Watch the search tree grow
+
+The search lab below begins with a single root and runs 18 MCTS iterations in a
+small deterministic environment. Each nonterminal state has a left and a right
+action; terminal states return either 0 or 1. Intermediate rewards are zero and
+$\gamma=1$, so a rollout's return is its terminal payoff.
+
+Step through each operation to see a node added, actions compared using UCT,
+a rollout trajectory simulated, and the return backed up one node at a time.
+Blue nodes persist in the search tree. Dashed amber nodes exist only during a
+rollout and do not receive stored statistics. Later iterations can add those
+states through expansion. The final operation recommends a real action using
+the root visit counts.
+
+<DemoFrame
+  chapter="planning-and-learning"
+  demo="mcts"
+  title="MCTS search lab: growing a tree, rollout trajectories, and value calculations"
+  source="src/demos/mcts/search.ts"
+  height="1300px"
+/>
+
+Use **See an operation** to jump to expansion, a success or failure return,
+backup, a direct terminal visit, or the final action choice. Change the tree
+policy to compare UCT with greedy selection; the rollout policy remains uniform
+random over actions. A fixed seed makes each walkthrough reproducible.
+
+### MCTS Example
+
+Each node is a state, each edge is an action, and transitions are deterministic.
+A black dot represents an action that has not yet been tried. The initial root
+value is $2/4 = 0.5$. Use a **greedy tree policy** to select the next node to
+expand, then suppose its rollout succeeds (+1). What are the updated values of
+nodes 1–5?
+
+<DemoFrame
+  chapter="planning-and-learning"
+  demo="mcts-exercise"
+  title="MCTS example: greedy selection, expansion, simulation, and backup"
+  source="src/demos/mcts/core.ts"
+  height="1100px"
+/>
+
+Greedy selection chooses node 3 because its value, $1/1$, is greater than
+$0/1$ and $1/2$. Expand an untried action below node 3. A successful rollout
+adds **one success and one visit** to the new child, node 3, and node 1.
+Nodes outside this path receive no update.
+
+| Node | Before | After success | Updated value |
+| --- | --- | --- | --- |
+| 1 (root) | 2/4 | 3/5 | 0.6 |
+| 2 | 0/1 | 0/1 | 0 |
+| 3 | 1/1 | 2/2 | 1 |
+| 4 | 1/2 | 1/2 | 0.5 |
+| 5 | 0/1 | 0/1 | 0 |
+
+Back up the **sampled return**, not a child's average value. For the visited
+nodes, $N(s) \leftarrow N(s)+1$ and $W(s) \leftarrow W(s)+G$, with
+$G=1$ for success and $G=0$ for failure. Then $V(s)=W(s)/N(s)$.
+The root becomes $3/5$ rather than the unweighted average of its children's
+values: child branches have different visit counts.
+
+:::tip[Greedy policy in this exercise]
+This example uses greedy selection as specified. MCTS often uses UCT, which
+adds an exploration bonus to avoid repeatedly choosing only the current best
+child. The supplied rollout outcome isolates the backup calculation; it does
+not specify a complete environment or rollout policy.
+:::
+
+## Key takeaways
+
+| Method | Where computation goes | Why it helps |
+| --- | --- | --- |
+| Dyna-Q | Previously experienced state–action pairs | Reuses a learned model between real interactions |
+| Dyna-Q+ | Modeled pairs, including long-untried actions | Encourages checking whether the environment changed |
+| Prioritized sweeping | Large target changes and their predecessors | Directs backups toward consequential changes |
+| Trajectory sampling / RTDP | States reached along relevant trajectories | Concentrates planning on reachable decisions |
+| Rollout / MCTS | Futures rooted at the current state | Supports the next real action under a search budget |
+
+A model provides simulated experience; the planning algorithm decides how to
+spend computation on it. In the MCTS example, one successful rollout updates
+only the visited path: the root becomes **0.6**, while node 4 remains **0.5**.
+
+## Prerequisites
+
+Markov decision processes, Bellman backups and dynamic programming, Monte Carlo
+returns, and temporal-difference control (especially Q-learning).

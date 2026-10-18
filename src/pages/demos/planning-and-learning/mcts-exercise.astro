@@ -1,0 +1,129 @@
+---
+import { chapterUrl } from '../../../lib/url';
+const nodes = [{ id: 1, x: 310, y: 65 }, { id: 2, x: 110, y: 195 }, { id: 3, x: 310, y: 195 }, { id: 4, x: 490, y: 195 }, { id: 5, x: 575, y: 330 }];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Step through greedy selection, expansion, a rollout, and backup in a Monte Carlo tree search example." />
+    <title>MCTS Example · Planning and learning</title>
+  </head>
+  <body>
+    <main>
+      <header>
+        <a href={chapterUrl('08-planning-and-learning')} target="_top">← Chapter 8 · Planning and learning</a>
+        <h1>MCTS Example</h1>
+        <p>Follow one Monte Carlo tree search iteration. Nodes are states, edges are actions, and transitions are deterministic.</p>
+      </header>
+      <div class="layout">
+        <section class="tree-card" aria-label="Search tree">
+          <div class="tree-heading"><h2>Successes / visits</h2><span data-progress>Step 0 / 6</span></div>
+          <svg viewBox="0 0 650 405" role="img" aria-labelledby="tree-title tree-desc">
+            <title id="tree-title">MCTS search tree</title>
+            <desc id="tree-desc">Root 1 has children 2, 3, and 4. Node 4 has child 5. A black dot below node 3 represents an untried action. Exact values are also in the table below.</desc>
+            <g class="edges">
+              <path d="M310 65 L110 195" />
+              <path data-edge="select" d="M310 65 L310 195" />
+              <path d="M310 65 L490 195 L575 330" />
+              <path data-edge="expand" class="untried" d="M310 195 L310 330" />
+            </g>
+            {nodes.map(node => (
+              <g data-node={node.id} transform={`translate(${node.x} ${node.y})`}>
+                <circle r="39" />
+                <text class="node-id" x="-53" y="-32">{node.id}</text>
+                <text data-count text-anchor="middle" y="7">{['2/4', '0/1', '1/1', '1/2', '0/1'][node.id - 1]}</text>
+                <text class="value" data-value text-anchor="middle" y="60">V = {['0.50', '0.00', '1.00', '0.50', '0.00'][node.id - 1]}</text>
+              </g>
+            ))}
+            <circle data-dot cx="310" cy="330" r="7" fill="#05070b" stroke="#94a3b8" stroke-width="2" />
+            <g data-new-node transform="translate(310 330)" data-hidden>
+              <circle r="39" />
+              <text class="node-id" x="-58" y="-32">new</text>
+              <text data-new-count text-anchor="middle" y="7">0/0</text>
+              <text class="value" data-new-value text-anchor="middle" y="60">unvisited</text>
+            </g>
+          </svg>
+          <p class="legend"><span>●</span> Black dot: untried action · <strong>Highlighted path:</strong> this iteration only</p>
+        </section>
+        <section class="explanation" aria-label="Iteration controls">
+          <ol class="phases" aria-label="MCTS phases">
+            <li data-phase="1">Select</li><li data-phase="2">Expand</li><li data-phase="3">Simulate</li><li data-phase="4">Back up</li>
+          </ol>
+          <div class="narration" role="status" aria-live="polite" aria-atomic="true">
+            <h2 data-title>Start with the given tree</h2>
+            <p data-explanation>The root value is 2/4 = 0.50. Compare its children before choosing an action.</p>
+          </div>
+          <label for="outcome">Rollout outcome</label>
+          <select id="outcome"><option value="success">Success (+1) · given example</option><option value="failure">Failure (0) · compare</option></select>
+          <p class="hint">Changing the outcome restarts the example. Failure is 0 because these values estimate success probability.</p>
+          <div class="controls">
+            <button data-back disabled>← Back</button><button data-next class="primary">Next step →</button>
+            <button data-play>Play</button><button data-reset>Reset</button>
+          </div>
+          <p class="hint">Greedy tree policy: choose the visited child with the largest success ratio. At node 3, expand an untried action.</p>
+        </section>
+      </div>
+      <section class="results" aria-label="Node values">
+        <h2>Track the backup</h2>
+        <p>V(s) = successes / visits. Each visited node receives the <em>same rollout result</em> once; sibling branches keep their counts.</p>
+        <table>
+          <thead><tr><th scope="col">Node</th><th scope="col">Before</th><th scope="col">Current</th><th scope="col">Value</th><th scope="col">Update</th></tr></thead>
+          <tbody>{nodes.map(node => <tr data-row={node.id}><th scope="row">{node.id}</th><td>{['2/4', '0/1', '1/1', '1/2', '0/1'][node.id - 1]}</td><td data-current></td><td data-ratio></td><td data-change>—</td></tr>)}</tbody>
+        </table>
+        <p data-summary class="summary">Predict the final values, then step through the iteration to check your answer.</p>
+      </section>
+      <noscript>Enable JavaScript to run the simulation. For a successful rollout: nodes 1–5 end at 3/5, 0/1, 2/2, 1/2, 0/1, respectively.</noscript>
+    </main>
+    <script>
+      import { initMCTS } from '../../../demos/mcts/render';
+      initMCTS();
+    </script>
+    <style is:global>
+      :root { color-scheme: dark; font-family: system-ui, sans-serif; background: #0f172a; color: #e2e8f0; line-height: 1.5; }
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      main { max-width: 1180px; margin: auto; padding: 1.25rem; }
+      a { color: #a5b4fc; font-size: .85rem; }
+      h1 { font-size: 1.8rem; margin: .4rem 0; }
+      h2 { font-size: 1.05rem; margin: 0 0 .5rem; }
+      p { margin: .4rem 0 .8rem; }
+      header p, .hint, .legend { color: #b8c6d9; }
+      .layout { display: grid; grid-template-columns: minmax(0, 1.6fr) minmax(260px, 1fr); gap: 1rem; margin: 1.2rem 0; }
+      .tree-card, .explanation, .results { border: 1px solid #475569; background: #1e293b; border-radius: 12px; padding: 1rem; min-width: 0; }
+      .tree-heading { display: flex; justify-content: space-between; gap: .5rem; }
+      .tree-heading span { font-size: .85rem; color: #c4b5fd; }
+      svg { display: block; width: 100%; height: auto; }
+      svg [data-hidden] { display: none; }
+      .edges path { stroke: #8193ab; stroke-width: 3; fill: none; }
+      .edges path.untried { stroke-dasharray: 6 5; }
+      .edges path.active { stroke: #c4b5fd; stroke-width: 5; }
+      [data-node] circle, [data-new-node] circle { fill: #c6def0; stroke: #90b0cc; stroke-width: 2; }
+      svg text { fill: #102032; font-size: 23px; }
+      svg .node-id { fill: #fda4af; font-size: 20px; font-weight: 700; }
+      svg .value { fill: #cbd5e1; font-size: 16px; }
+      svg .selected circle { stroke: #c4b5fd; stroke-width: 6; }
+      svg .updated circle { fill: #bbf7d0; stroke: #4ade80; stroke-width: 4; }
+      .legend { font-size: .78rem; margin-bottom: 0; }
+      .legend span { color: #05070b; text-shadow: 0 0 2px #fff; }
+      .phases { list-style: none; padding: 0; margin: 0 0 1rem; display: flex; gap: .4rem; flex-wrap: wrap; font-size: .8rem; }
+      .phases li { padding: .3rem .5rem; background: #0f172a; border-radius: 5px; }
+      .phases li.active { background: #c4b5fd; color: #1e1b4b; }
+      .narration { min-height: 165px; }
+      select, button { font: inherit; color: inherit; background: #0f172a; border: 1px solid #8193ab; border-radius: 6px; padding: .5rem .65rem; }
+      select { width: 100%; margin-top: .3rem; }
+      .hint { font-size: .8rem; }
+      .controls { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1rem 0; }
+      button { cursor: pointer; }
+      button.primary { background: #c4b5fd; color: #1e1b4b; font-weight: 700; }
+      button:disabled { opacity: .45; cursor: default; }
+      :focus-visible { outline: 3px solid #fbbf24; outline-offset: 3px; }
+      table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+      th, td { padding: .5rem; border-bottom: 1px solid #475569; text-align: left; }
+      tr.updated { background: #163e38; }
+      .summary { color: #c4b5fd; margin-bottom: 0; }
+      @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } .narration { min-height: 0; } main { padding: .7rem; } th, td { padding: .4rem .25rem; font-size: .85rem; } }
+    </style>
+  </body>
+</html>
