@@ -17,6 +17,8 @@ export interface Series {
   xEnd?: number;
   /** Shade the area under the line. Only sensible for a single series. */
   fill?: boolean;
+  /** Canvas dash pattern, e.g. [5, 4] for a reference line. */
+  dash?: number[];
 }
 
 export interface ChartOptions {
@@ -33,7 +35,7 @@ export interface ChartOptions {
   formatY?: (value: number) => string;
 }
 
-const PADDING = { top: 12, right: 14, bottom: 28, left: 44 };
+export const PADDING = { top: 12, right: 14, bottom: 28, left: 44 };
 
 /**
  * Sizes the backing store to the element's real pixel dimensions.
@@ -149,6 +151,7 @@ export function drawLineChart(
     ctx.strokeStyle = s.color;
     ctx.lineWidth = 2;
     ctx.lineJoin = 'round';
+    ctx.setLineDash(s.dash ?? []);
     s.points.forEach((v, i) => {
       const x = toX(i, n, xEnd);
       const y = toY(v);
@@ -157,6 +160,7 @@ export function drawLineChart(
     });
     ctx.stroke();
   }
+  ctx.setLineDash([]);
 }
 
 /** Reduces a long series to at most `maxPoints` evenly-spaced samples. */

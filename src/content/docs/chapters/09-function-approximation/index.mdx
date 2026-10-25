@@ -1,0 +1,207 @@
+---
+title: Function approximation
+description: "Drop the lookup table. Generalise across states so the method survives problems too large to enumerate, and see why bootstrapping off-policy can then diverge."
+sidebar:
+  order: 1
+---
+
+import DemoFrame from '../../../../components/DemoFrame.astro';
+
+## Learning objective
+
+Drop the lookup table. Generalise across states so the method survives problems
+too large to enumerate. Derive the semi-gradient TD(0) update for a linear value
+function, then trace Baird's counterexample to see why function approximation,
+bootstrapping and off-policy updates together can drive the weights to infinity.
+
+## Why tabular methods stop working
+
+Every method so far kept one number per state. That breaks down in two ways:
+
+- **Size.** Backgammon has about $10^{20}$ states, and a camera image has far
+  more. A table that large cannot be stored, let alone filled.
+- **Generalisation.** A table learns nothing about a state it has never
+  visited. In large problems almost every state is new, so the agent must use
+  what it learned about *similar* states.
+
+Function approximation replaces the table with a parameterised function
+$\hat v(s,\mathbf w)\approx v_\pi(s)$. The weight vector $\mathbf w\in\mathbb R^d$
+has far fewer components than there are states ($d \ll |\mathcal S|$), so
+changing one weight changes the estimates of many states at once. That sharing
+is the source of generalisation, and, as the demo below shows, of new failure
+modes.
+
+## The prediction objective
+
+With fewer weights than states, the estimates cannot all be exact, so we must
+say which states matter most. The **mean squared value error** weights each
+state's error by a distribution $\mu(s)\ge 0$, $\sum_s \mu(s)=1$:
+
+$$
+\overline{\text{VE}}(\mathbf w)=\sum_{s}\mu(s)\left[v_\pi(s)-\hat v(s,\mathbf w)\right]^2 .
+$$
+
+Usually $\mu$ is the **on-policy distribution**: the fraction of time spent in
+each state while following $\pi$. Keep this choice in mind; the counterexample
+below breaks it.
+
+## Stochastic-gradient and semi-gradient methods
+
+If we knew $v_\pi(S_t)$, stochastic gradient descent on one sample of
+$\overline{\text{VE}}$ would give
+
+$$
+\mathbf w_{t+1}=\mathbf w_t+\alpha\left[U_t-\hat v(S_t,\mathbf w_t)\right]\nabla\hat v(S_t,\mathbf w_t),
+$$
+
+with target $U_t=v_\pi(S_t)$. Any unbiased target works too: the Monte Carlo
+return $U_t=G_t$ gives **gradient Monte Carlo**, which converges to a local
+optimum of $\overline{\text{VE}}$.
+
+TD replaces the target with a bootstrapped one, $U_t=R_{t+1}+\gamma\hat v(S_{t+1},\mathbf w_t)$.
+That target depends on $\mathbf w$, but the update ignores its gradient and
+differentiates only the estimate $\hat v(S_t,\mathbf w)$. The result is not a true
+gradient of any objective, so it is called **semi-gradient TD(0)**:
+
+$$
+\mathbf w\leftarrow\mathbf w+\alpha\,\delta\,\nabla\hat v(S,\mathbf w),
+\qquad
+\delta=R+\gamma\hat v(S',\mathbf w)-\hat v(S,\mathbf w).
+$$
+
+## Linear function approximation
+
+The most-studied case gives each state a **feature vector** $\mathbf x(s)\in\mathbb R^d$
+and estimates
+
+$$
+\hat v(s,\mathbf w)=\mathbf w^\top\mathbf x(s)=\sum_{j}w_j\,x_j(s),
+\qquad
+\nabla\hat v(s,\mathbf w)=\mathbf x(s).
+$$
+
+The gradient is just the features, so semi-gradient TD(0) becomes
+
+$$
+\mathbf w\leftarrow\mathbf w+\alpha\left[R+\gamma\,\mathbf w^\top\mathbf x(S')-\mathbf w^\top\mathbf x(S)\right]\mathbf x(S).
+$$
+
+A table is the special case $\mathbf x(s)=$ one-hot. When updates follow the
+on-policy distribution, linear semi-gradient TD(0) converges to the **TD fixed
+point** $\mathbf w_{\text{TD}}$, whose error is within a factor of the best
+possible:
+
+$$
+\overline{\text{VE}}(\mathbf w_{\text{TD}})\le\frac{1}{1-\gamma}\min_{\mathbf w}\overline{\text{VE}}(\mathbf w).
+$$
+
+That guarantee needs the on-policy distribution. Change the distribution and
+it can fail completely.
+
+## Baird's counterexample
+
+Baird's counterexample (Sutton & Barto, Example 11.1) is the standard
+demonstration. The demo uses a six-state, seven-weight version:
+
+| State | Estimate | Features $\mathbf x(s)$ | Transition |
+|---|---|---|---|
+| $s_1,\dots,s_5$ | $w_0+2w_i$ | $1$ at $w_0$, $2$ at $w_i$ | $s_i\to s_6$ |
+| $s_6$ | $2w_0+w_6$ | $2$ at $w_0$, $1$ at $w_6$ | $s_6\to s_6$ |
+
+Every reward is 0, so every true value is 0, and $\mathbf w=\mathbf 0$ represents
+that exactly. The features are linearly independent, with more weights than
+states. Nothing about the representation is too weak.
+
+Each **batch** uses all six transitions once, with every $\delta$ computed from
+the same frozen weights, then applies the summed update:
+
+$$
+\Delta\mathbf w=\alpha\sum_{(s,s')}\left[0+\gamma\,\hat v(s',\mathbf w)-\hat v(s,\mathbf w)\right]\mathbf x(s),
+\qquad
+\mathbf w\leftarrow\mathbf w+\Delta\mathbf w .
+$$
+
+This is the expected update under a *uniform* distribution over the six
+transitions, which is not the distribution of the chain itself. Starting from
+$\mathbf w=(1,1,1,1,1,1,5)$ with $\alpha=0.1$, $\gamma=0.95$:
+
+- upper states: $\hat v=1+2\cdot1=3$, so $\delta=0+0.95\cdot7-3=3.65$;
+- bottom state: $\hat v=2\cdot1+5=7$, so $\delta=0+0.95\cdot7-7=-0.35$;
+- $\Delta w_0=0.1\,(5\cdot3.65\cdot1+(-0.35)\cdot2)=1.755$,
+  $\Delta w_i=0.1\cdot3.65\cdot2=0.73$, $\Delta w_6=0.1\cdot(-0.35)\cdot1=-0.035$.
+
+After one batch, $\mathbf w=(2.755,1.73,\dots,1.73,4.965)$. The upper values rise
+from 3 to 6.215, and the bottom value rises from 7 to **10.475**, even though
+its own $\delta$ was negative. The shared weight $w_0$ received five positive
+pushes from the upper states and only one negative push from $s_6$. Raising
+$\hat v(s_6)$ raises every upper target on the next batch, and the loop repeats.
+
+## Interactive demo: watch the weights diverge
+
+Step one batch at a time and read every $\delta$ and $\Delta w$ in the
+breakdown table. Switch to **per-transition (online)** updates to apply the
+update after each transition instead. Use the **log** axis once the values
+outgrow the linear one.
+
+<DemoFrame
+  chapter="function-approximation"
+  demo="baird"
+  title="Baird's counterexample: step semi-gradient TD(0) and watch the weights diverge"
+  source="src/demos/baird/core.ts"
+  height="1400px"
+/>
+
+## What to observe
+
+- **The first step.** Check the sanity numbers above in the breakdown table.
+  The $s_6\to s_6$ row is the only negative $\delta$, yet the bottom circle
+  darkens along with the others.
+- **Growth is a spiral, not a straight climb.** With the defaults, the
+  weights swing through zero with growing amplitude. Switch to the log axis to
+  see the envelope grow steadily. The badge appears after about 580 batches.
+  Raise the speed to get there quickly.
+- **Batch vs. online.** In batch mode $w_1,\dots,w_5$ stay equal forever, so the
+  five upper-state curves lie on top of each other. Online updates break the
+  symmetry: later transitions see the earlier updates, and the curves split.
+  They still diverge, after about 600 sweeps.
+- **The step size only sets the pace.** At $\alpha=0.01$ it takes about 8,000
+  batches to diverge; at $\alpha=0.5$, about 60. A smaller step does not fix
+  the direction of the expected update.
+- **The discount is the knob.** With $\gamma$ at or below about $0.9$, the same
+  rule converges: every $\hat v(s)$ goes to 0. The weights settle at a
+  nonzero vector (about $w_0\approx-1.84$, $w_{1..5}\approx0.92$, $w_6\approx3.68$),
+  because with seven weights for six states many weight vectors give zero
+  values. Above about $0.91$ the bootstrapped target outruns the correction,
+  and the run diverges.
+
+## The deadly triad
+
+Instability like this needs three ingredients together (Sutton & Barto,
+Section 11.3):
+
+1. **Function approximation:** a weight shared across states, like $w_0$, so
+   an update for one state moves others.
+2. **Bootstrapping:** targets built from current estimates, like
+   $\gamma\hat v(s_6,\mathbf w)$, so raising an estimate raises the target.
+3. **Off-policy training:** updates distributed differently from the
+   on-policy distribution. Following the chain itself, an agent sits in $s_6$
+   after one step. Updating only $s_6\to s_6$ shrinks $\hat v(s_6)$ by the factor
+   $1-5\alpha(1-\gamma)$ each step, which converges.
+
+Remove any one and the danger goes away. Tabular features cannot spread an
+update to other states; Monte Carlo targets do not depend on $\mathbf w$; and
+on-policy updates restore the TD fixed-point guarantee. Each fix has a cost,
+though. Large problems need approximation, bootstrapping is what makes TD
+efficient, and off-policy learning is what lets Q-learning and experience
+replay work. Deep Q-networks (next chapter) keep all three and add
+stabilisers instead.
+
+## Still to come
+
+- Feature construction: polynomials and Fourier bases
+- Coarse coding and tile coding
+- Nonlinear approximation with neural networks
+
+## Prerequisites
+
+Temporal-difference learning (Chapter 6) and n-step bootstrapping (Chapter 7).

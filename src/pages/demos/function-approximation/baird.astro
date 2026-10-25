@@ -1,0 +1,315 @@
+---
+import { chapterUrl } from '../../../lib/url';
+const backHref = chapterUrl('09-function-approximation');
+
+const SUB = '₀₁₂₃₄₅₆';
+const R = 46;
+const BOTTOM = { x: 300, y: 254, r: 54 };
+const upper = [1, 2, 3, 4, 5].map(s => ({ s, x: 60 + 120 * (s - 1), y: 60 }));
+
+/** Arrow from an upper circle's rim to just short of the bottom circle's rim. */
+function arrow({ x, y }: { x: number; y: number }) {
+  const dx = BOTTOM.x - x;
+  const dy = BOTTOM.y - y;
+  const d = Math.hypot(dx, dy);
+  const ux = dx / d;
+  const uy = dy / d;
+  return {
+    x1: x + ux * R, y1: y + uy * R,
+    x2: BOTTOM.x - ux * (BOTTOM.r + 7), y2: BOTTOM.y - uy * (BOTTOM.r + 7),
+  };
+}
+const loopStart = { x: BOTTOM.x + BOTTOM.r * Math.cos(-0.6), y: BOTTOM.y + BOTTOM.r * Math.sin(-0.6) };
+const loopEnd = { x: BOTTOM.x + (BOTTOM.r + 7) * Math.cos(0.6), y: BOTTOM.y + (BOTTOM.r + 7) * Math.sin(0.6) };
+const steps = [0, 1, 2, 3, 4, 5, 6];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="Step semi-gradient TD(0) through Baird's counterexample and watch linear weights diverge although every true value is 0." />
+    <title>Baird's counterexample</title>
+  </head>
+  <body>
+    <main data-baird>
+      <header class="intro">
+        <p class="eyebrow">Function approximation · <a href={backHref} target="_top">← chapter</a></p>
+        <h1>Baird's counterexample <span class="badge" data-diverged hidden>⚠ Diverged!</span></h1>
+        <p class="muted">Semi-gradient TD(0) with linear features. Six transitions, every reward 0, so every true value is 0. Watch the estimates grow anyway.</p>
+      </header>
+
+      <div class="layout">
+        <aside class="sidebar">
+          <section class="card" aria-labelledby="controls-heading">
+            <h2 id="controls-heading">Settings <span class="hint">changing one restarts the run</span></h2>
+            <div class="row">
+              <label>Step size α <input data-alpha type="number" min="0" step="0.01" inputmode="decimal" /></label>
+              <label>Discount γ <input data-gamma type="number" min="0" max="1" step="0.01" inputmode="decimal" /></label>
+            </div>
+            <fieldset>
+              <legend>Initial weights</legend>
+              <div class="weights-grid">
+                {steps.map(j => (
+                  <label>w{SUB[j]} <input data-w0={j} type="number" step="0.5" inputmode="decimal" /></label>
+                ))}
+              </div>
+            </fieldset>
+            <div class="toggles" role="group" aria-label="Update order">
+              <button type="button" data-mode="batch" title="All six δ from the same frozen weights, then one update">Batch</button>
+              <button type="button" data-mode="online" title="Update w after every transition">Per-transition (online)</button>
+            </div>
+          </section>
+
+          <section class="card" aria-label="Run controls">
+            <div class="buttons">
+              <button type="button" data-step class="primary">Step (1 batch)</button>
+              <button type="button" data-step10>Step ×10</button>
+              <button type="button" data-play aria-pressed="false">Play</button>
+              <button type="button" data-reset>Reset</button>
+            </div>
+            <label>Speed <output data-speed-value>20/s</output>
+              <input data-speed type="range" min="1" max="120" step="1" value="20" />
+            </label>
+            <button type="button" data-defaults class="link">Restore defaults</button>
+          </section>
+
+          <section class="card" aria-labelledby="weights-heading">
+            <h2 id="weights-heading">Current weights <span class="iteration">iteration <strong data-iteration>0</strong></span></h2>
+            <dl class="weight-list" data-weight-list></dl>
+          </section>
+
+          <section class="card note" aria-labelledby="why-heading">
+            <h2 id="why-heading">Why it blows up</h2>
+            <p>The true value of every state is <strong>0</strong>, and <strong>w = 0</strong> represents it exactly. Yet the estimates grow without bound. That needs all three legs of the <strong>deadly triad</strong>:</p>
+            <ul>
+              <li><strong>Function approximation:</strong> w₀ is shared by every state, so pulling one value down drags the others with it.</li>
+              <li><strong>Bootstrapping:</strong> each target uses v̂(s₆), which the same update just pushed up.</li>
+              <li><strong>Off-policy distribution:</strong> each transition is updated once per sweep. Following the chain itself, you would sit in s₆ forever after one step, and updating s₆ → s₆ alone converges.</li>
+            </ul>
+            <p>Remove any one leg and the updates are stable. Even with all three, γ below about 0.91 converges here.</p>
+          </section>
+        </aside>
+
+        <section class="content">
+          <p class="status" data-status role="status"></p>
+
+          <figure class="card diagram">
+            <figcaption><h2>States and values <span class="hint">fill darkens with log |v̂|; hover a state for its arithmetic</span></h2></figcaption>
+            <svg viewBox="0 0 600 322" role="img" aria-label="Five upper states each transition to the bottom state, which loops on itself. Each state shows its value formula and current value.">
+              <defs>
+                <marker id="arrowhead" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                  <path d="M0 0 L10 5 L0 10 z" class="arrowhead" />
+                </marker>
+              </defs>
+              {upper.map(node => {
+                const a = arrow(node);
+                return <line class="edge" x1={a.x1} y1={a.y1} x2={a.x2} y2={a.y2} marker-end="url(#arrowhead)" />;
+              })}
+              <path class="edge" d={`M${loopStart.x} ${loopStart.y} C 450 170, 450 338, ${loopEnd.x} ${loopEnd.y}`} marker-end="url(#arrowhead)" fill="none" />
+              <text class="edge-label" x="438" y="258">s₆ → s₆</text>
+              <text class="edge-label" x="96" y="200">all rewards 0</text>
+              {upper.map(({ s, x, y }) => (
+                <g class="node" data-node={s} data-k="0" tabindex="0">
+                  <title></title>
+                  <circle cx={x} cy={y} r={R} />
+                  <text x={x} y={y - 20} class="node-name">s{SUB[s]}</text>
+                  <text x={x} y={y - 2} class="node-formula">w₀ + 2w{SUB[s]}</text>
+                  <text x={x} y={y + 22} class="node-value" data-node-value>–</text>
+                </g>
+              ))}
+              <g class="node" data-node="6" data-k="0" tabindex="0">
+                <title></title>
+                <circle cx={BOTTOM.x} cy={BOTTOM.y} r={BOTTOM.r} />
+                <text x={BOTTOM.x} y={BOTTOM.y - 22} class="node-name">s₆</text>
+                <text x={BOTTOM.x} y={BOTTOM.y - 2} class="node-formula">2w₀ + w₆</text>
+                <text x={BOTTOM.x} y={BOTTOM.y + 24} class="node-value" data-node-value>–</text>
+              </g>
+            </svg>
+          </figure>
+
+          <section class="card" aria-labelledby="breakdown-heading">
+            <h2 id="breakdown-heading">Most recent update, step by step</h2>
+            <div data-breakdown></div>
+          </section>
+
+          <div class="charts-head">
+            <h2>Over time</h2>
+            <div class="toggles compact" role="group" aria-label="Y-axis scale">
+              <button type="button" data-scale="linear">Linear</button>
+              <button type="button" data-scale="log" title="Signed log: sign(v)·log₁₀(1 + |v|)">Log</button>
+            </div>
+          </div>
+          <div class="charts">
+            <figure class="card chart">
+              <figcaption>
+                <h2>Weights</h2>
+                <span class="legend">{steps.map(j => <span><i class={`c${j}`}></i>w{SUB[j]}</span>)}<span><i class="truth"></i>0</span></span>
+              </figcaption>
+              <canvas data-weight-chart role="img" aria-label="Each weight against iteration"></canvas>
+              <p class="readout" data-weight-readout></p>
+            </figure>
+            <figure class="card chart">
+              <figcaption>
+                <h2>State values <span class="hint">true value 0</span></h2>
+                <span class="legend">{steps.slice(1).map(j => <span><i class={`c${j}`}></i>s{SUB[j]}</span>)}<span><i class="truth"></i>true</span></span>
+              </figcaption>
+              <canvas data-value-chart role="img" aria-label="Each state's estimated value against iteration, with the true value 0 dashed"></canvas>
+              <p class="readout" data-value-readout></p>
+            </figure>
+          </div>
+        </section>
+      </div>
+      <noscript>This experiment needs JavaScript.</noscript>
+    </main>
+    <script>
+      import { initBaird } from '../../../demos/baird/render';
+      initBaird();
+    </script>
+    <style is:global>
+      :root {
+        color-scheme: light;
+        --bg: #f1f5f9; --surface: #ffffff; --inset: #f8fafc; --border: #cbd5e1; --grid: #e2e8f0;
+        --text: #0f172a; --muted: #475569; --accent: #5b21b6; --accent-bg: #ede9fe; --danger: #b91c1c; --danger-bg: #fee2e2;
+        --edge: #64748b;
+        /* Categorical slots 1–6 (reference palette, light steps); w0 is shared by every state, so it is neutral ink. */
+        --series-shared: #334155;
+        --series-1: #2a78d6; --series-2: #eb6834; --series-3: #1baf7a; --series-4: #eda100; --series-5: #e87ba4; --series-6: #6250d6;
+        /* Sequential blue for |v̂|: step 0 recedes to the surface. */
+        --seq-0: #cde2fb; --seq-1: #9ec5f4; --seq-2: #6da7ec; --seq-3: #3987e5; --seq-4: #256abf; --seq-5: #184f95; --seq-6: #0d366b;
+        --ink-0: #0f172a; --ink-1: #0f172a; --ink-2: #0f172a; --ink-3: #ffffff; --ink-4: #ffffff; --ink-5: #ffffff; --ink-6: #ffffff;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root:not([data-theme="light"]) {
+          color-scheme: dark;
+          --bg: #0f172a; --surface: #1e293b; --inset: #0f172a; --border: #475569; --grid: #334155;
+          --text: #e2e8f0; --muted: #94a3b8; --accent: #c4b5fd; --accent-bg: #312e81; --danger: #fca5a5; --danger-bg: #7f1d1d;
+          --edge: #94a3b8;
+          --series-shared: #e2e8f0;
+          --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500; --series-5: #d55181; --series-6: #9085e9;
+          --seq-0: #0d366b; --seq-1: #184f95; --seq-2: #256abf; --seq-3: #3987e5; --seq-4: #6da7ec; --seq-5: #9ec5f4; --seq-6: #cde2fb;
+          --ink-0: #ffffff; --ink-1: #ffffff; --ink-2: #ffffff; --ink-3: #ffffff; --ink-4: #0f172a; --ink-5: #0f172a; --ink-6: #0f172a;
+        }
+      }
+      :root[data-theme="dark"] {
+        color-scheme: dark;
+        --bg: #0f172a; --surface: #1e293b; --inset: #0f172a; --border: #475569; --grid: #334155;
+        --text: #e2e8f0; --muted: #94a3b8; --accent: #c4b5fd; --accent-bg: #312e81; --danger: #fca5a5; --danger-bg: #7f1d1d;
+        --edge: #94a3b8;
+        --series-shared: #e2e8f0;
+        --series-1: #3987e5; --series-2: #d95926; --series-3: #199e70; --series-4: #c98500; --series-5: #d55181; --series-6: #9085e9;
+        --seq-0: #0d366b; --seq-1: #184f95; --seq-2: #256abf; --seq-3: #3987e5; --seq-4: #6da7ec; --seq-5: #9ec5f4; --seq-6: #cde2fb;
+        --ink-0: #ffffff; --ink-1: #ffffff; --ink-2: #ffffff; --ink-3: #ffffff; --ink-4: #0f172a; --ink-5: #0f172a; --ink-6: #0f172a;
+      }
+
+      :root { font-family: ui-sans-serif, system-ui, sans-serif; line-height: 1.4; font-size: 14px; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); }
+      main { padding: .75rem; max-width: 1400px; margin: 0 auto; }
+      h1 { font-size: 1.3rem; line-height: 1.2; margin: .1rem 0 .25rem; display: flex; align-items: center; gap: .6rem; flex-wrap: wrap; }
+      h2 { font-size: .9rem; margin: 0; }
+      p { margin: 0; }
+      a { color: var(--accent); }
+      .eyebrow { color: var(--accent); font-size: .7rem; text-transform: uppercase; letter-spacing: .07em; }
+      .eyebrow a { text-transform: none; letter-spacing: 0; }
+      .muted { color: var(--muted); font-size: .85rem; max-width: 62rem; }
+      .hint { font-weight: 400; color: var(--muted); font-size: .75rem; margin-left: .3rem; }
+      .badge { font-size: .8rem; font-weight: 800; color: var(--danger); background: var(--danger-bg); border: 1px solid var(--danger); border-radius: 999px; padding: .15rem .6rem; }
+      .badge[hidden] { display: none; }
+
+      .layout { display: grid; grid-template-columns: 320px minmax(0, 1fr); gap: .75rem; margin-top: .6rem; align-items: start; }
+      .sidebar, .content { display: flex; flex-direction: column; gap: .6rem; min-width: 0; }
+      .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: .6rem .75rem; display: flex; flex-direction: column; gap: .5rem; margin: 0; min-width: 0; }
+      .row { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; }
+      label { display: block; font-weight: 600; font-size: .8rem; }
+      input[type=number] { display: block; width: 100%; margin-top: .2rem; font: inherit; font-variant-numeric: tabular-nums; color: inherit; background: var(--inset); border: 1px solid var(--border); border-radius: 6px; padding: .25rem .4rem; }
+      input[aria-invalid="true"] { border-color: var(--danger); outline: 1px solid var(--danger); }
+      input[type=range] { display: block; width: 100%; accent-color: var(--accent); margin: .2rem 0 0; }
+      fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+      legend { font-weight: 600; font-size: .8rem; padding: 0; margin-bottom: .2rem; }
+      .weights-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .35rem; }
+      .weights-grid label { font-weight: 500; }
+      output { float: right; font-variant-numeric: tabular-nums; color: var(--accent); }
+      button { font: inherit; font-weight: 600; color: var(--text); background: var(--inset); border: 1px solid var(--border); border-radius: 6px; padding: .4rem .7rem; cursor: pointer; }
+      button:hover:not(:disabled) { border-color: var(--accent); }
+      button:disabled { opacity: .45; cursor: not-allowed; }
+      button.primary { background: var(--accent); color: var(--surface); border-color: var(--accent); }
+      button.link { align-self: flex-start; background: none; border: 0; padding: 0; color: var(--accent); font-weight: 500; text-decoration: underline; }
+      :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+      .buttons { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+      .toggles { display: flex; gap: .3rem; }
+      .toggles button { flex: 1; padding: .3rem .4rem; font-size: .8rem; }
+      .toggles button[aria-pressed="true"], [data-play][aria-pressed="true"] { background: var(--accent-bg); border-color: var(--accent); color: var(--text); }
+      .toggles.compact button { flex: 0 0 auto; }
+
+      .iteration { float: right; font-weight: 400; color: var(--muted); font-size: .8rem; }
+      .iteration strong { color: var(--text); font-variant-numeric: tabular-nums; }
+      .table-scroll { overflow-x: auto; max-width: 100%; }
+      table { border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: .8rem; width: 100%; }
+      th, td { padding: .25rem .4rem; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--grid); }
+      th { color: var(--muted); font-weight: 600; }
+      tbody th, tfoot th { text-align: left; color: var(--text); }
+      .weight-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(8rem, 1fr)); gap: .3rem; margin: 0; }
+      .weight-list div { display: flex; justify-content: space-between; align-items: baseline; gap: .3rem; background: var(--inset); border-radius: 6px; padding: .25rem .45rem; }
+      .weight-list dt { color: var(--muted); font-size: .75rem; }
+      .weight-list dd { margin: 0; white-space: nowrap; font-weight: 700; font-variant-numeric: tabular-nums; font-size: .82rem; }
+      .weight-list dd[data-trend="up"]::after { content: " ↑"; color: var(--muted); font-weight: 400; }
+      .weight-list dd[data-trend="down"]::after { content: " ↓"; color: var(--muted); font-weight: 400; }
+      .note ul { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: .3rem; }
+      .note, .note p { font-size: .82rem; }
+
+      .status { background: var(--surface); border: 1px solid var(--border); border-left: 4px solid var(--accent); border-radius: 10px; padding: .45rem .7rem; font-size: .88rem; }
+      .diagram svg { width: 100%; max-height: 360px; display: block; }
+      .edge { stroke: var(--edge); stroke-width: 2; }
+      .arrowhead { fill: var(--edge); }
+      .edge-label { fill: var(--muted); font-size: 13px; }
+      .node { outline: none; }
+      .node circle { stroke: var(--edge); stroke-width: 1.5; transition: fill 200ms ease; }
+      .node:focus-visible circle { stroke: var(--accent); stroke-width: 4; }
+      .node text { text-anchor: middle; font-variant-numeric: tabular-nums; }
+      .node-name { font-size: 13px; opacity: .85; }
+      .node-formula { font-size: 13px; }
+      .node-value { font-size: 17px; font-weight: 800; }
+      .node[data-k="0"] circle { fill: var(--seq-0); } .node[data-k="0"] text { fill: var(--ink-0); }
+      .node[data-k="1"] circle { fill: var(--seq-1); } .node[data-k="1"] text { fill: var(--ink-1); }
+      .node[data-k="2"] circle { fill: var(--seq-2); } .node[data-k="2"] text { fill: var(--ink-2); }
+      .node[data-k="3"] circle { fill: var(--seq-3); } .node[data-k="3"] text { fill: var(--ink-3); }
+      .node[data-k="4"] circle { fill: var(--seq-4); } .node[data-k="4"] text { fill: var(--ink-4); }
+      .node[data-k="5"] circle { fill: var(--seq-5); } .node[data-k="5"] text { fill: var(--ink-5); }
+      .node[data-k="6"] circle { fill: var(--seq-6); } .node[data-k="6"] text { fill: var(--ink-6); }
+
+      .empty, .order { font-size: .82rem; color: var(--muted); }
+      .steps code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: .76rem; }
+      .steps th.delta, .steps td.delta { text-align: left; }
+      .steps td.zero { color: var(--muted); opacity: .6; }
+      .steps tfoot th, .steps tfoot td { border-bottom: 0; }
+      .steps tfoot tr.sum td, .steps tfoot tr.sum th { border-top: 2px solid var(--border); font-weight: 700; }
+      .steps tfoot tr.after td, .steps tfoot tr.after th { font-weight: 800; color: var(--accent); }
+
+      .charts-head { display: flex; justify-content: space-between; align-items: center; gap: .5rem; margin-top: .2rem; }
+      .charts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: .6rem; }
+      .chart { gap: .25rem; }
+      .chart figcaption { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: .25rem .75rem; }
+      .legend { display: flex; flex-wrap: wrap; gap: .25rem .6rem; font-size: .75rem; color: var(--muted); }
+      .legend i { display: inline-block; width: .9rem; height: 3px; vertical-align: middle; margin-right: .25rem; }
+      .legend i.c0 { background: var(--series-shared); }
+      .legend i.c1 { background: var(--series-1); } .legend i.c2 { background: var(--series-2); } .legend i.c3 { background: var(--series-3); }
+      .legend i.c4 { background: var(--series-4); } .legend i.c5 { background: var(--series-5); } .legend i.c6 { background: var(--series-6); }
+      .legend i.truth { background: repeating-linear-gradient(90deg, var(--muted) 0 4px, transparent 4px 7px); }
+      canvas { display: block; width: 100%; height: 260px; touch-action: pan-y; }
+      .readout { font-size: .72rem; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 2.2em; }
+
+      @media (max-width: 900px) {
+        .layout { grid-template-columns: minmax(0, 1fr); }
+        .charts { grid-template-columns: minmax(0, 1fr); }
+      }
+      @media (max-width: 480px) {
+        main { padding: .75rem 1rem; }
+        .node-formula { font-size: 15px; }
+        .node-value { font-size: 20px; }
+        .edge-label { display: none; }
+      }
+    </style>
+  </body>
+</html>
