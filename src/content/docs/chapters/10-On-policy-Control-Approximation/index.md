@@ -1,0 +1,176 @@
+---
+title: On-policy Control with Approximation
+description: "Semi-gradient Sarsa for episodic tasks, and the average-reward setting with differential value functions for continuing tasks."
+sidebar:
+  order: 1
+---
+
+## Overview
+
+Chapter 9 used function approximation for **prediction**. This chapter turns it into **control**: we approximate action values $\hat{q}(s, a, \mathbf{w}) \approx q_*(s, a)$ with a weight vector $\mathbf{w} \in \mathbb{R}^d$ and improve the policy as we learn, staying **on-policy** (off-policy methods are Chapter 11).
+
+The chapter has two halves:
+
+- **Episodic tasks** — a straightforward extension: semi-gradient Sarsa plus $\varepsilon$-greedy action selection, and its $n$-step version.
+- **Continuing tasks** — not straightforward. Once we have genuine function approximation, discounting stops making sense as a *problem* definition, and we switch to the **average-reward** setting with **differential** value functions.
+
+## 10.1 Episodic semi-gradient control
+
+The general update for action-value prediction mirrors the state-value case:
+
+$$
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha \big[ U_t - \hat{q}(S_t, A_t, \mathbf{w}_t) \big] \nabla \hat{q}(S_t, A_t, \mathbf{w}_t)
+$$
+
+where the target $U_t$ can be any estimate of $q_\pi(S_t, A_t)$ (Monte Carlo return, $n$-step return, ...). Using the one-step Sarsa target gives **episodic semi-gradient one-step Sarsa**:
+
+$$
+\mathbf{w}_{t+1} \doteq \mathbf{w}_t + \alpha \big[ R_{t+1} + \gamma \hat{q}(S_{t+1}, A_{t+1}, \mathbf{w}_t) - \hat{q}(S_t, A_t, \mathbf{w}_t) \big] \nabla \hat{q}(S_t, A_t, \mathbf{w}_t)
+$$
+
+- **"Semi"-gradient:** the target also depends on $\mathbf{w}$, but we ignore that dependence and differentiate only $\hat{q}(S_t, A_t, \mathbf{w})$. It is not true gradient descent on any objective.
+- **Control:** with a small discrete action set, compute $\hat{q}(S_{t+1}, a, \mathbf{w})$ for every action, act $\varepsilon$-greedily, and use the same policy for the update target (on-policy GPI). Continuous or very large action sets remain an open problem for this approach.
+- For a fixed policy it converges like semi-gradient TD(0), with the same kind of error bound.
+
+### Example: Mountain Car
+
+An underpowered car must reach the top of a hill, but gravity beats the engine. The only solution is to first back up the opposite slope to build momentum — things must get worse before they get better.
+
+- Reward $-1$ per step until the goal; actions: full throttle forward, reverse, or zero.
+- The continuous state (position, velocity) is encoded with **8 grid tilings** (tile coding), and $\hat{q}$ is linear in those binary features: $\hat{q}(s, a, \mathbf{w}) = \mathbf{w}^\top \mathbf{x}(s, a)$.
+- **Optimistic initialization drives exploration.** All weights start at 0, while true values are negative. Even with $\varepsilon = 0$, every visited state ends up looking worse than unvisited ones, so the agent keeps moving to new states until it finds the goal.
+
+## 10.2 Semi-gradient $n$-step Sarsa
+
+Replace the target with the $n$-step return:
+
+$$
+G_{t:t+n} \doteq R_{t+1} + \gamma R_{t+2} + \cdots + \gamma^{n-1} R_{t+n} + \gamma^n \hat{q}(S_{t+n}, A_{t+n}, \mathbf{w}_{t+n-1})
+$$
+
+$$
+\mathbf{w}_{t+n} \doteq \mathbf{w}_{t+n-1} + \alpha \big[ G_{t:t+n} - \hat{q}(S_t, A_t, \mathbf{w}_{t+n-1}) \big] \nabla \hat{q}(S_t, A_t, \mathbf{w}_{t+n-1})
+$$
+
+with $G_{t:t+n} \doteq G_t$ if $t + n \ge T$. As in the tabular case, an **intermediate level of bootstrapping works best**: on Mountain Car, $n = 4$ to $8$ learns faster and ends up better than $n = 1$, while $n = 16$ is worse and noisier. Larger $n$ also needs a smaller step size $\alpha$.
+
+## 10.3 Average reward: a new setting for continuing tasks
+
+A third way to define the goal, alongside episodic and discounted: in a task that never ends, rank policies by their **average reward per step**, with no discounting at all.
+
+$$
+r(\pi) \doteq \lim_{h \to \infty} \frac{1}{h} \sum_{t=1}^{h} \mathbb{E}[R_t \mid S_0, A_{0:t-1} \sim \pi]
+= \sum_s \mu_\pi(s) \sum_a \pi(a \mid s) \sum_{s', r} p(s', r \mid s, a)\, r
+$$
+
+- $\mu_\pi(s) \doteq \lim_{t\to\infty} \Pr\{S_t = s \mid A_{0:t-1} \sim \pi\}$ is the **steady-state distribution**. It is invariant under the policy's dynamics:
+  $\sum_s \mu_\pi(s) \sum_a \pi(a \mid s)\, p(s' \mid s, a) = \mu_\pi(s')$.
+- The second form requires the MDP to be **ergodic** (irreducible and aperiodic): the long-run state distribution exists and does not depend on $S_0$, so early decisions only have a temporary effect. Ergodicity is sufficient but not necessary — a periodic reward sequence $1, 0, 1, 0, \dots$ has no limiting distribution, yet its time-average reward is still $1/2$.
+- All policies that attain the maximal $r(\pi)$ are considered optimal (gain optimality — it ignores transient differences, which is adequate for most practical purposes).
+
+**Worked example.** A two-state chain with $\Pr(A \to B) = 0.3$, $\Pr(B \to A) = 0.6$, expected rewards 1 in $A$ and 5 in $B$. Balancing flow, $0.3\,\mu(A) = 0.6\,\mu(B)$, so $\mu = (2/3, 1/3)$ and $r(\pi) = \tfrac23 \cdot 1 + \tfrac13 \cdot 5 = 7/3$.
+
+### Differential returns and value functions
+
+Returns are measured relative to the average:
+
+$$
+G_t \doteq (R_{t+1} - r(\pi)) + (R_{t+2} - r(\pi)) + (R_{t+3} - r(\pi)) + \cdots
+$$
+
+The corresponding $v_\pi$, $q_\pi$ are **differential value functions**: how much better than average you do from a state. Their Bellman equations are the usual ones with every $\gamma$ removed and every $r$ replaced by $r - r(\pi)$, e.g.
+
+$$
+q_\pi(s, a) = \sum_{r, s'} p(s', r \mid s, a) \Big[ r - r(\pi) + \sum_{a'} \pi(a' \mid s')\, q_\pi(s', a') \Big]
+$$
+
+The **differential TD error** uses a running estimate $\bar{R}_t$ of $r(\pi)$:
+
+$$
+\delta_t \doteq R_{t+1} - \bar{R}_t + \hat{q}(S_{t+1}, A_{t+1}, \mathbf{w}_t) - \hat{q}(S_t, A_t, \mathbf{w}_t)
+$$
+
+### Differential semi-gradient Sarsa
+
+Each step:
+
+1. Take $A$, observe $R, S'$; choose $A'$ $\varepsilon$-greedily from $\hat{q}(S', \cdot, \mathbf{w})$.
+2. $\delta \leftarrow R - \bar{R} + \hat{q}(S', A', \mathbf{w}) - \hat{q}(S, A, \mathbf{w})$
+3. $\bar{R} \leftarrow \bar{R} + \beta \delta$
+4. $\mathbf{w} \leftarrow \mathbf{w} + \alpha \delta \nabla \hat{q}(S, A, \mathbf{w})$
+5. $S \leftarrow S'$, $A \leftarrow A'$
+
+:::tip[Why update $\bar{R}$ with $\delta$ instead of $R - \bar{R}$?]
+On a deterministic 3-state ring with reward $+1$ on arrival at one state, even with $\bar{R}$ already at the true value $1/3$, the errors $R - \bar{R}$ keep cycling $-\tfrac13, -\tfrac13, +\tfrac23$. With correct differential values, $\delta$ is exactly $0$ every step: the value terms absorb the *predictable* fluctuation in reward, so only genuine surprise moves $\bar{R}$. Much more stable.
+:::
+
+One limitation: the algorithm converges to the differential values **plus an arbitrary constant**, since the Bellman equations and TD errors are unchanged by shifting all values. This usually does not matter.
+
+### Example: access-control queuing
+
+Ten servers; customers of priority 1, 2, 4, 8 pay that reward if served. Each step, accept or reject the customer at the head of the queue; busy servers free up with probability 0.06. Tabular differential Sarsa ($\alpha = \beta = 0.01$, $\varepsilon = 0.1$) learns an intuitive policy: with many free servers accept almost anyone; as servers fill up, reject low-priority customers to keep room for high payers. The learned $\bar{R} \approx 2.31$.
+
+### Differential values when the limit does not exist
+
+For periodic processes the differential return does not converge, so define values with an Abel-style limit:
+
+$$
+v_\pi(s) \doteq \lim_{\gamma \to 1} \lim_{h \to \infty} \sum_{t=0}^{h} \gamma^t \big( \mathbb{E}_\pi[R_{t+1} \mid S_0 = s] - r(\pi) \big)
+$$
+
+Discounting makes the series converge; letting $\gamma \to 1$ removes it again. Equivalently $v_\pi(s) = \lim_{\gamma \to 1} \big[ v^\gamma_\pi(s) - r(\pi)/(1-\gamma) \big]$: the discounted value minus the huge part shared by every state. When the ordinary limit exists, both definitions agree.
+
+| Process | $r(\pi)$ | Differential values |
+|---|---|---|
+| Rewards $1, 0, 1, 0, \dots$ from $A$; $0, 1, 0, 1, \dots$ from $B$ | $1/2$ | $v(A) = 1/4$, $v(B) = -1/4$ |
+| Ring $A \to B \to C \to A$, $+1$ on arriving at $A$ | $1/3$ | $v(A) = -1/3$, $v(B) = 0$, $v(C) = 1/3$ |
+
+For the first row: $\sum_t \gamma^t R_{t+1} = 1/(1-\gamma^2)$ from $A$, so $v(A) = \lim_{\gamma\to1}\big[\tfrac{1}{1-\gamma^2} - \tfrac{1}{2(1-\gamma)}\big] = \lim_{\gamma\to1} \tfrac{1-\gamma}{2(1-\gamma^2)} = \tfrac14$ (by L'Hôpital, or cancel to $\tfrac{1}{2(1+\gamma)}$). Sanity check with the differential Bellman equation: $v(A) = 1 - \tfrac12 + v(B)$.
+
+## 10.4 Deprecating the discounted setting
+
+Why not just keep discounting for continuing tasks? Suppose we measure a policy by its discounted value averaged over the states it actually visits:
+
+$$
+J(\pi) = \sum_s \mu_\pi(s)\, v^\gamma_\pi(s)
+$$
+
+Expanding with the Bellman equation and using the invariance of $\mu_\pi$ gives $J(\pi) = r(\pi) + \gamma J(\pi)$, hence
+
+$$
+J(\pi) = \frac{r(\pi)}{1 - \gamma}.
+$$
+
+Intuition: with no distinguished time steps, every reward appears in some return at every discount position, so each gets total weight $1 + \gamma + \gamma^2 + \cdots = 1/(1-\gamma)$.
+
+Consequences:
+
+- **$\gamma$ has no effect on the ordering of policies** — it could even be $0$ (then $J = r(\pi)$ exactly, because $\mu_\pi$ already encodes the policy's long-run effects). Discounting has no role in *defining* the control problem.
+- $\gamma$ becomes a **solution-method parameter**, not a problem parameter. But discounted algorithms do not actually optimize $J$, so they are not guaranteed to optimize average reward. (In an algorithm, $\gamma = 0$ would make the agent myopic — e.g. accept every customer in the queuing task.)
+- **Root cause:** with function approximation the **policy improvement theorem is lost**. Improving one state's value no longer guarantees the policy improves overall, because states share parameters. $\varepsilon$-greedy improvement can even chatter among policies without converging. This gap exists for episodic and average-reward settings too; Chapter 13's policy gradient theorem is a partial replacement.
+
+## 10.5 Differential semi-gradient $n$-step Sarsa
+
+The $n$-step return in differential form:
+
+$$
+G_{t:t+n} \doteq R_{t+1} - \bar{R}_{t+n-1} + \cdots + R_{t+n} - \bar{R}_{t+n-1} + \hat{q}(S_{t+n}, A_{t+n}, \mathbf{w}_{t+n-1})
+$$
+
+with $n$-step TD error $\delta_t \doteq G_{t:t+n} - \hat{q}(S_t, A_t, \mathbf{w})$, then the same updates for $\bar{R}$ and $\mathbf{w}$.
+
+The step size $\beta$ on $\bar{R}$ must be small for a good long-run estimate, but then $\bar{R}$ is biased by its initial value for a long time; a sample average adapts fast early but cannot track a changing policy. The fix is the **unbiased constant-step-size trick** (Exercise 2.7): keep $\bar{o} \leftarrow \bar{o} + \beta(1 - \bar{o})$ with $\bar{o}_0 = 0$ and use step size $\beta / \bar{o}$ — large at first, settling to $\beta$.
+
+## Key takeaways
+
+- **Episodic control** with approximation is a direct extension: semi-gradient (n-step) Sarsa with $\varepsilon$-greedy actions. Intermediate $n$ works best.
+- **Continuing control** should be framed as maximizing **average reward** $r(\pi)$, the steady-state expected reward per step.
+- **Differential** returns, value functions, Bellman equations and TD errors parallel the discounted ones: drop $\gamma$, subtract $\bar{R}$ from each reward.
+- Under on-policy averaging, the discounted objective is just $r(\pi)/(1-\gamma)$, so $\gamma$ does not change which policy is best.
+- With function approximation there is no policy improvement theorem for value-based control — the main open theoretical issue, motivating policy-gradient methods later.
+
+## In practice
+
+- Semi-gradient Q-learning with a neural network is the core of **DQN**; target networks and experience replay exist largely to tame the instability of semi-gradient bootstrapping.
+- $n$-step returns are standard in modern agents (Rainbow, A2C/A3C; GAE averages over them).
+- Average reward is the natural objective for never-ending operational problems: scheduling, queuing, networking, inventory. Most deep RL still uses discounting, but treats $\gamma$ as a horizon/variance hyperparameter — exactly the view this chapter argues for.
