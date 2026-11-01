@@ -31,7 +31,7 @@ appending a chapter to inserting one. Sidebar labels stay unnumbered; the
 | 7 | `n-step-and-eligibility-traces` | Unifies Monte Carlo and TD along one axis. |
 | 8 | `planning-and-learning` | Dyna-Q, learned models, simulated experience. |
 | 9 | `function-approximation` | Drops the lookup table. Linear methods, tile coding, semi-gradient TD. |
-| 10 | `deep-q-networks` | Neural function approximation, replay buffers, target networks. |
+| 10 | `On-policy-Control-Approximation` | Semi-gradient Sarsa for episodic control and average-reward methods for continuing tasks. |
 | 11 | `policy-gradient-methods` | Optimizes the policy directly. REINFORCE, baselines, actor-critic. |
 | 12 | `advanced-policy-optimization` | A2C, trust regions, PPO. |
 

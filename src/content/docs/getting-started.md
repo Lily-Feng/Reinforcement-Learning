@@ -19,7 +19,7 @@ chapters above it and nothing below it, so reading top to bottom always works.
 | n-step and eligibility traces | The axis connecting Monte Carlo and TD. |
 | Planning and learning | Learned models and simulated experience. |
 | Function approximation | Dropping the lookup table. |
-| Deep Q-networks | Neural value approximation at scale. |
+| On-policy control with approximation | Semi-gradient Sarsa and average-reward methods for continuing tasks. |
 | Policy gradient methods | Optimising the policy directly. |
 | Advanced policy optimization | Actor-critic, trust regions, PPO. |
 
