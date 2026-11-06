@@ -20,10 +20,21 @@ interface Props {
   source?: string;
   /** Iframe height. Demos are responsive, so this is a starting point. */
   height?: string;
+  /** Query string appended to the demo URL, without the leading "?". */
+  query?: string;
+  /**
+   * Resize the iframe to the demo's content. The demo posts
+   * `{ type: 'gpu-lab-height', height }`; only messages from this iframe count.
+   */
+  autoHeight?: boolean;
+  /** Text of the full-screen link. */
+  fullLabel?: string;
 }
 
-const { chapter, demo, title, source, height = '780px' } = Astro.props;
-const href = demoUrl(chapter, demo);
+const { chapter, demo, title, source, query, autoHeight = false, fullLabel = 'Open demo full screen ↗' } = Astro.props;
+const height = Astro.props.height ?? (autoHeight ? '640px' : '780px');
+const base = demoUrl(chapter, demo);
+const href = query ? `${base}?${query}` : base;
 ---
 
 <figure class="demo-frame">
@@ -32,12 +43,33 @@ const href = demoUrl(chapter, demo);
     title={title}
     height={height}
     loading="lazy"
+    data-auto-height={autoHeight ? '' : undefined}
   ></iframe>
   <figcaption>
-    <a href={href} target="_blank" rel="noopener">Open demo full screen ↗</a>
+    <a href={base} target="_blank" rel="noopener">{fullLabel}</a>
     {source && <a href={sourceUrl(source)} target="_blank" rel="noopener">View source ↗</a>}
   </figcaption>
 </figure>
+
+{autoHeight && (
+  <script is:inline>
+    (() => {
+      if (window.__demoAutoHeight) return;
+      window.__demoAutoHeight = true;
+      const MIN = 320;
+      const MAX = 4000;
+      window.addEventListener('message', (event) => {
+        const data = event.data;
+        if (!data || data.type !== 'gpu-lab-height' || typeof data.height !== 'number') return;
+        for (const frame of document.querySelectorAll('iframe[data-auto-height]')) {
+          if (frame.contentWindow && event.source === frame.contentWindow) {
+            frame.style.height = `${Math.min(MAX, Math.max(MIN, Math.ceil(data.height)))}px`;
+          }
+        }
+      });
+    })();
+  </script>
+)}
 
 <style>
   .demo-frame {

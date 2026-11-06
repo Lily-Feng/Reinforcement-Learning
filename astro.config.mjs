@@ -25,7 +25,7 @@ const chapters = [
   ['n-step and eligibility traces', '07-n-step-and-eligibility-traces'],
   ['Planning and learning', '08-planning-and-learning'],
   ['Function approximation', '09-function-approximation'],
-  ['On-policy control with approximation', '10-On-policy-Control-Approximation'],
+  ['On-policy control with approximation', '10-on-policy-control-approximation'],
   ['Policy gradient methods', '11-policy-gradient-methods'],
   ['Advanced policy optimization', '12-advanced-policy-optimization'],
 ];

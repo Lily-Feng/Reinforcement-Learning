@@ -31,7 +31,7 @@ appending a chapter to inserting one. Sidebar labels stay unnumbered; the
 | 7 | `n-step-and-eligibility-traces` | Unifies Monte Carlo and TD along one axis. |
 | 8 | `planning-and-learning` | Dyna-Q, learned models, simulated experience. |
 | 9 | `function-approximation` | Drops the lookup table. Linear methods, tile coding, semi-gradient TD. |
-| 10 | `On-policy-Control-Approximation` | Semi-gradient Sarsa for episodic control and average-reward methods for continuing tasks. |
+| 10 | `on-policy-control-approximation` | Semi-gradient Sarsa for episodic control and average-reward methods for continuing tasks. |
 | 11 | `policy-gradient-methods` | Optimizes the policy directly. REINFORCE, baselines, actor-critic. |
 | 12 | `advanced-policy-optimization` | A2C, trust regions, PPO. |
 
@@ -209,7 +209,7 @@ export default defineConfig({
         { label: 'n-step and eligibility traces', autogenerate: { directory: 'chapters/07-n-step-and-eligibility-traces' } },
         { label: 'Planning and learning', autogenerate: { directory: 'chapters/08-planning-and-learning' } },
         { label: 'Function approximation', autogenerate: { directory: 'chapters/09-function-approximation' } },
-        { label: 'Deep Q-networks', autogenerate: { directory: 'chapters/10-deep-q-networks' } },
+        { label: 'On-policy control with approximation', autogenerate: { directory: 'chapters/10-on-policy-control-approximation' } },
         { label: 'Policy gradient methods', autogenerate: { directory: 'chapters/11-policy-gradient-methods' } },
         { label: 'Advanced policy optimization', autogenerate: { directory: 'chapters/12-advanced-policy-optimization' } },
       ],
@@ -389,3 +389,26 @@ controller are labeled learning extensions. Tests cover analytic values,
 policy stability, terminal transitions, in-place ordering, and original
 Python parity fixtures. Run them with
 `node --experimental-strip-types --test tests/dynamic-programming.test.mjs`.
+
+## On-policy control lab (Chapter 10)
+
+One single-page app, `demos/on-policy-control-approximation/lab/`, holds 18
+modules built on one running example: admission control for a GPU cluster
+whose requests have a continuous job length. The chapter embeds it section by
+section with `DemoFrame` (`query="embed=1&section=<id>"`, `autoHeight`).
+
+- `src/demos/gpu-cluster/core/`: pure simulation and math, no DOM. `env.ts`
+  (continuous simulator), `buckets.ts` + `model.ts` (bucketed exact model),
+  `exact.ts` (μ_π, r(π), discounted and differential values, RVI,
+  finite-horizon DP), `montecarlo.ts`, `toy-chains.ts`, `tiles.ts` (tiles3
+  port), `features.ts`, `agents.ts`, `evaluate.ts`, `jobs.ts` (worker jobs).
+- `src/demos/gpu-cluster/app/`: hash router, shared store (config, cached
+  references, the M13 agent), shell, time-sliced runner, worker client.
+- `src/demos/gpu-cluster/modules/mNN-*.ts`: one module each, loaded with a
+  dynamic `import()`; `mount(el, ctx)` returns an unmount that stops every loop.
+- `src/demos/gpu-cluster/worker.ts`: the one module Worker for sweeps and references.
+
+References are exact on the bucketed model (labelled "exact on B-bucket
+model") or Monte Carlo with 95% CIs when A > 0. Tests:
+`node --test tests/*.test.mjs` (the `gpu-cluster-*` files cover the math,
+simulator, tiles and agents).

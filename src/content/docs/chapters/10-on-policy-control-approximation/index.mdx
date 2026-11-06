@@ -5,7 +5,17 @@ sidebar:
   order: 1
 ---
 
+import DemoFrame from '../../../../components/DemoFrame.astro';
+import { demoUrl } from '../../../../lib/url';
+
+export const labUrl = demoUrl('on-policy-control-approximation', 'lab');
+
+
 ## Overview
+
+:::note[Interactive lab]
+Every section below embeds part of one running example: **admission control for a GPU inference cluster** whose requests come from four price tiers and have a *continuous* job length. The <a href={labUrl} target="_blank" rel="noopener">full-screen lab</a> has all 18 modules, a shared settings drawer, and exact references computed on a bucketed model of the cluster.
+:::
 
 Chapter 9 used function approximation for **prediction**. This chapter turns it into **control**: we approximate action values $\hat{q}(s, a, \mathbf{w}) \approx q_*(s, a)$ with a weight vector $\mathbf{w} \in \mathbb{R}^d$ and improve the policy as we learn, staying **on-policy** (off-policy methods are Chapter 11).
 
@@ -13,6 +23,17 @@ The chapter has two halves:
 
 - **Episodic tasks** — a straightforward extension: semi-gradient Sarsa plus $\varepsilon$-greedy action selection, and its $n$-step version.
 - **Continuing tasks** — not straightforward. Once we have genuine function approximation, discounting stops making sense as a *problem* definition, and we switch to the **average-reward** setting with **differential** value functions.
+
+
+<DemoFrame
+  chapter="on-policy-control-approximation"
+  demo="lab"
+  query="embed=1&section=problem"
+  autoHeight
+  title="GPU admission control lab: the problem (M01–M02)"
+  source="src/demos/gpu-cluster/"
+  fullLabel="Open the whole lab full screen ↗"
+/>
 
 ## 10.1 Episodic semi-gradient control
 
@@ -40,6 +61,17 @@ An underpowered car must reach the top of a hill, but gravity beats the engine. 
 - The continuous state (position, velocity) is encoded with **8 grid tilings** (tile coding), and $\hat{q}$ is linear in those binary features: $\hat{q}(s, a, \mathbf{w}) = \mathbf{w}^\top \mathbf{x}(s, a)$.
 - **Optimistic initialization drives exploration.** All weights start at 0, while true values are negative. Even with $\varepsilon = 0$, every visited state ends up looking worse than unvisited ones, so the agent keeps moving to new states until it finds the goal.
 
+
+<DemoFrame
+  chapter="on-policy-control-approximation"
+  demo="lab"
+  query="embed=1&section=episodic"
+  autoHeight
+  title="GPU admission control lab: episodic semi-gradient control (M03–M05)"
+  source="src/demos/gpu-cluster/"
+  fullLabel="Open the whole lab full screen ↗"
+/>
+
 ## 10.2 Semi-gradient $n$-step Sarsa
 
 Replace the target with the $n$-step return:
@@ -53,6 +85,17 @@ $$
 $$
 
 with $G_{t:t+n} \doteq G_t$ if $t + n \ge T$. As in the tabular case, an **intermediate level of bootstrapping works best**: on Mountain Car, $n = 4$ to $8$ learns faster and ends up better than $n = 1$, while $n = 16$ is worse and noisier. Larger $n$ also needs a smaller step size $\alpha$.
+
+
+<DemoFrame
+  chapter="on-policy-control-approximation"
+  demo="lab"
+  query="embed=1&section=n-step"
+  autoHeight
+  title="GPU admission control lab: n-step Sarsa (M06–M07)"
+  source="src/demos/gpu-cluster/"
+  fullLabel="Open the whole lab full screen ↗"
+/>
 
 ## 10.3 Average reward: a new setting for continuing tasks
 
@@ -127,6 +170,17 @@ Discounting makes the series converge; letting $\gamma \to 1$ removes it again. 
 
 For the first row: $\sum_t \gamma^t R_{t+1} = 1/(1-\gamma^2)$ from $A$, so $v(A) = \lim_{\gamma\to1}\big[\tfrac{1}{1-\gamma^2} - \tfrac{1}{2(1-\gamma)}\big] = \lim_{\gamma\to1} \tfrac{1-\gamma}{2(1-\gamma^2)} = \tfrac14$ (by L'Hôpital, or cancel to $\tfrac{1}{2(1+\gamma)}$). Sanity check with the differential Bellman equation: $v(A) = 1 - \tfrac12 + v(B)$.
 
+
+<DemoFrame
+  chapter="on-policy-control-approximation"
+  demo="lab"
+  query="embed=1&section=average-reward"
+  autoHeight
+  title="GPU admission control lab: average reward (M08–M13)"
+  source="src/demos/gpu-cluster/"
+  fullLabel="Open the whole lab full screen ↗"
+/>
+
 ## 10.4 Deprecating the discounted setting
 
 Why not just keep discounting for continuing tasks? Suppose we measure a policy by its discounted value averaged over the states it actually visits:
@@ -149,6 +203,17 @@ Consequences:
 - $\gamma$ becomes a **solution-method parameter**, not a problem parameter. But discounted algorithms do not actually optimize $J$, so they are not guaranteed to optimize average reward. (In an algorithm, $\gamma = 0$ would make the agent myopic — e.g. accept every customer in the queuing task.)
 - **Root cause:** with function approximation the **policy improvement theorem is lost**. Improving one state's value no longer guarantees the policy improves overall, because states share parameters. $\varepsilon$-greedy improvement can even chatter among policies without converging. This gap exists for episodic and average-reward settings too; Chapter 13's policy gradient theorem is a partial replacement.
 
+
+<DemoFrame
+  chapter="on-policy-control-approximation"
+  demo="lab"
+  query="embed=1&section=discounting"
+  autoHeight
+  title="GPU admission control lab: deprecating discounting (M14–M17)"
+  source="src/demos/gpu-cluster/"
+  fullLabel="Open the whole lab full screen ↗"
+/>
+
 ## 10.5 Differential semi-gradient $n$-step Sarsa
 
 The $n$-step return in differential form:
@@ -168,6 +233,17 @@ The step size $\beta$ on $\bar{R}$ must be small for a good long-run estimate, b
 - **Differential** returns, value functions, Bellman equations and TD errors parallel the discounted ones: drop $\gamma$, subtract $\bar{R}$ from each reward.
 - Under on-policy averaging, the discounted objective is just $r(\pi)/(1-\gamma)$, so $\gamma$ does not change which policy is best.
 - With function approximation there is no policy improvement theorem for value-based control — the main open theoretical issue, motivating policy-gradient methods later.
+
+
+<DemoFrame
+  chapter="on-policy-control-approximation"
+  demo="lab"
+  query="embed=1&section=review"
+  autoHeight
+  title="GPU admission control lab: check yourself (M18)"
+  source="src/demos/gpu-cluster/"
+  fullLabel="Open the whole lab full screen ↗"
+/>
 
 ## In practice
 
