@@ -27,7 +27,7 @@ const chapters = [
   ['Function approximation', '09-function-approximation'],
   ['On-policy control with approximation', '10-on-policy-control-approximation'],
   ['Policy gradient methods', '11-policy-gradient-methods'],
-  ['Advanced policy optimization', '12-advanced-policy-optimization'],
+  ['Eligibility Traces', '12-eligibility-traces'],
 ];
 
 export default defineConfig({

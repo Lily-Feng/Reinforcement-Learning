@@ -33,7 +33,7 @@ appending a chapter to inserting one. Sidebar labels stay unnumbered; the
 | 9 | `function-approximation` | Drops the lookup table. Linear methods, tile coding, semi-gradient TD. |
 | 10 | `on-policy-control-approximation` | Semi-gradient Sarsa for episodic control and average-reward methods for continuing tasks. |
 | 11 | `policy-gradient-methods` | Optimizes the policy directly. REINFORCE, baselines, actor-critic. |
-| 12 | `advanced-policy-optimization` | A2C, trust regions, PPO. |
+| 12 | `eligibility-traces` | Forward and backward views, TD(λ), Sarsa(λ), and true online learning. |
 
 Each row is a directory, prefixed with its number: `01-foundations`,
 `02-multi-armed-bandits`, and so on.
@@ -211,7 +211,7 @@ export default defineConfig({
         { label: 'Function approximation', autogenerate: { directory: 'chapters/09-function-approximation' } },
         { label: 'On-policy control with approximation', autogenerate: { directory: 'chapters/10-on-policy-control-approximation' } },
         { label: 'Policy gradient methods', autogenerate: { directory: 'chapters/11-policy-gradient-methods' } },
-        { label: 'Advanced policy optimization', autogenerate: { directory: 'chapters/12-advanced-policy-optimization' } },
+        { label: 'Eligibility Traces', autogenerate: { directory: 'chapters/12-eligibility-traces' } },
       ],
     }),
   ],
